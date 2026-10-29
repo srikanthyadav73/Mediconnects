@@ -643,3 +643,4 @@ CREATE POLICY "Admin can read audit_log" ON public.audit_log
 CREATE POLICY "Staff can insert audit_log" ON public.audit_log
   FOR INSERT TO authenticated
   WITH CHECK (public.is_staff());
+

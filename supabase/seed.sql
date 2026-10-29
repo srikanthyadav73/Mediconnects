@@ -238,3 +238,4 @@ SELECT
        ELSE 'read' END
 FROM public.guardians g
 ON CONFLICT (campaign_id, guardian_id) DO NOTHING;
+

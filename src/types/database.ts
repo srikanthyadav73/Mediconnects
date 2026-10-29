@@ -22,7 +22,7 @@ export type MessageStatus = "queued" | "sent" | "delivered" | "read" | "failed";
 export type CampaignStatus = "draft" | "scheduled" | "running" | "completed" | "cancelled";
 export type CampaignRecipientStatus = "queued" | "sent" | "delivered" | "read" | "failed" | "excluded_no_consent";
 
-export interface Database {
+export type Database = {
   public: {
     Tables: {
       user_roles: {
@@ -44,6 +44,7 @@ export interface Database {
           role?: UserRole;
           created_at?: string;
         };
+        Relationships: [];
       };
       profiles: {
         Row: {
@@ -76,6 +77,7 @@ export interface Database {
           created_at?: string;
           updated_at?: string;
         };
+        Relationships: [];
       };
       guardians: {
         Row: {
@@ -108,6 +110,7 @@ export interface Database {
           created_at?: string;
           updated_at?: string;
         };
+        Relationships: [];
       };
       patients: {
         Row: {
@@ -149,6 +152,7 @@ export interface Database {
           created_at?: string;
           updated_at?: string;
         };
+        Relationships: [];
       };
       visits: {
         Row: {
@@ -187,6 +191,7 @@ export interface Database {
           notes?: string | null;
           created_at?: string;
         };
+        Relationships: [];
       };
       appointments: {
         Row: {
@@ -228,6 +233,7 @@ export interface Database {
           created_at?: string;
           updated_at?: string;
         };
+        Relationships: [];
       };
       website_enquiries: {
         Row: {
@@ -272,6 +278,7 @@ export interface Database {
           converted_patient_id?: string | null;
           created_at?: string;
         };
+        Relationships: [];
       };
       consents: {
         Row: {
@@ -298,6 +305,7 @@ export interface Database {
           source?: ConsentSource;
           created_at?: string;
         };
+        Relationships: [];
       };
       services: {
         Row: {
@@ -324,6 +332,7 @@ export interface Database {
           is_active?: boolean;
           created_at?: string;
         };
+        Relationships: [];
       };
       invoices: {
         Row: {
@@ -368,6 +377,7 @@ export interface Database {
           due_date?: string;
           created_at?: string;
         };
+        Relationships: [];
       };
       invoice_items: {
         Row: {
@@ -397,6 +407,7 @@ export interface Database {
           unit_price?: number;
           total_price?: number;
         };
+        Relationships: [];
       };
       payments: {
         Row: {
@@ -438,6 +449,7 @@ export interface Database {
           notes?: string | null;
           created_at?: string;
         };
+        Relationships: [];
       };
       message_templates: {
         Row: {
@@ -470,6 +482,7 @@ export interface Database {
           approval_status?: "approved" | "pending" | "rejected";
           created_at?: string;
         };
+        Relationships: [];
       };
       messages: {
         Row: {
@@ -520,6 +533,7 @@ export interface Database {
           read_at?: string | null;
           created_at?: string;
         };
+        Relationships: [];
       };
       medication_reminders: {
         Row: {
@@ -564,6 +578,7 @@ export interface Database {
           is_active?: boolean;
           created_at?: string;
         };
+        Relationships: [];
       };
       campaigns: {
         Row: {
@@ -608,6 +623,7 @@ export interface Database {
           failed_count?: number;
           created_at?: string;
         };
+        Relationships: [];
       };
       campaign_recipients: {
         Row: {
@@ -640,6 +656,7 @@ export interface Database {
           error_reason?: string | null;
           created_at?: string;
         };
+        Relationships: [];
       };
       audit_log: {
         Row: {
@@ -675,6 +692,7 @@ export interface Database {
           ip_address?: string | null;
           created_at?: string;
         };
+        Relationships: [];
       };
     };
     Views: {
@@ -684,6 +702,7 @@ export interface Database {
           total_visits: number;
           unique_patients: number;
         };
+        Relationships: [];
       };
       new_vs_returning: {
         Row: {
@@ -692,6 +711,7 @@ export interface Database {
           returning_patients: number;
           total_visits: number;
         };
+        Relationships: [];
       };
       revenue_daily: {
         Row: {
@@ -702,6 +722,7 @@ export interface Database {
           razorpay_collected: number;
           total_collected: number;
         };
+        Relationships: [];
       };
       outstanding_balances: {
         Row: {
@@ -720,6 +741,7 @@ export interface Database {
           due_date: string;
           created_at: string;
         };
+        Relationships: [];
       };
       campaign_stats: {
         Row: {
@@ -735,6 +757,7 @@ export interface Database {
           failed_count: number;
           excluded_no_consent_count: number;
         };
+        Relationships: [];
       };
     };
     Functions: {
@@ -755,5 +778,11 @@ export interface Database {
         Returns: boolean;
       };
     };
+    Enums: {
+      [_ in never]: never;
+    };
+    CompositeTypes: {
+      [_ in never]: never;
+    };
   };
-}
+};
