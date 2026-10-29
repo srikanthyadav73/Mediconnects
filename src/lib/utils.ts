@@ -28,3 +28,14 @@ export function calculateAge(dob: string): string {
   }
   return `${years}y`;
 }
+
+export function calculateAgeYears(dob: string, referenceDate: Date = new Date(2026, 9, 29)): number {
+  if (!dob) return 0;
+  const birth = new Date(dob);
+  let years = referenceDate.getFullYear() - birth.getFullYear();
+  const m = referenceDate.getMonth() - birth.getMonth();
+  if (m < 0 || (m === 0 && referenceDate.getDate() < birth.getDate())) {
+    years--;
+  }
+  return Math.max(0, years);
+}
