@@ -161,3 +161,4 @@ export async function addStaffUser(user: SessionUser): Promise<SessionUser[]> {
 export async function getAuditLogs(): Promise<AuditLogItem[]> {
   return inMemoryAuditLogs;
 }
+

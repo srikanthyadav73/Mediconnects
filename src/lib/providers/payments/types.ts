@@ -26,3 +26,4 @@ export interface PaymentProvider {
   createPaymentLink(params: CreatePaymentLinkParams): Promise<PaymentLinkResponse>;
   verifyWebhookSignature(params: VerifyWebhookSignatureParams): boolean;
 }
+

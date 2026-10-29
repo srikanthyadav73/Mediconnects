@@ -64,3 +64,4 @@ export function checkSlotConflict(
     conflictingAppointment: conflict,
   };
 }
+

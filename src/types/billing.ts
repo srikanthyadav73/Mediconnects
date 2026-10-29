@@ -51,3 +51,4 @@ export const HOSPITAL_SERVICES: HospitalServiceItem[] = [
   { id: "srv-7", name: "Complete Blood Count (CBC Micro)", category: "Laboratory", defaultFee: 450.0 },
   { id: "srv-8", name: "Emergency Pediatric Triage & Observation", category: "Emergency", defaultFee: 1500.0 },
 ];
+

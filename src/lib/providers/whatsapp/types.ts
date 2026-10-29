@@ -27,3 +27,4 @@ export interface WhatsAppProvider {
     languageCode?: string
   ): Promise<WhatsAppSendResult>;
 }
+

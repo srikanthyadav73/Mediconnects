@@ -91,3 +91,4 @@ export function prepareAndSanitizeWhatsAppMessage(
     strippedClinicalData,
   };
 }
+

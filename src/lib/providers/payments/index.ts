@@ -110,3 +110,4 @@ class MockRazorpayProvider implements PaymentProvider {
 export const paymentProvider: PaymentProvider = isRazorpayMock
   ? new MockRazorpayProvider()
   : new RealRazorpayProvider();
+

@@ -32,3 +32,4 @@ export interface CampaignDetail {
   createdAt: string;
   recipients: CampaignRecipientDetail[];
 }
+

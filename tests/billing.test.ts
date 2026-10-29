@@ -62,3 +62,4 @@ describe("Billing & Invoice Calculations", () => {
     expect(balance.status).toBe("paid");
   });
 });
+

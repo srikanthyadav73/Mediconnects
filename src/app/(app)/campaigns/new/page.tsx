@@ -37,3 +37,4 @@ export default async function NewCampaignPage() {
 
   return <WizardClient candidates={candidates} />;
 }
+

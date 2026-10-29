@@ -48,3 +48,4 @@ export function computeInvoiceBalance(netAmount: number, payments: number[]): {
     status,
   };
 }
+

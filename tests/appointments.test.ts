@@ -107,3 +107,4 @@ describe("Appointment Slot Double-Booking Prevention", () => {
     expect(result.hasConflict).toBe(false);
   });
 });
+
