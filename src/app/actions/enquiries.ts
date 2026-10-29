@@ -104,3 +104,4 @@ export async function submitEnquiryAction(data: EnquiryFormData) {
     message: `Thank you, ${parentName}. Your appointment request for ${childName} has been received. Our clinical coordinator will WhatsApp you at ${normalizedPhone} within 30 minutes to confirm your slot.`,
   };
 }
+

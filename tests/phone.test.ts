@@ -41,3 +41,4 @@ describe("Indian Phone Normalization & Validation (+91 E.164)", () => {
     expect(formatPhoneDisplay("+919820011001")).toBe("+91 98200 11001");
   });
 });
+

@@ -13,3 +13,18 @@ export function formatCurrencyINR(amount: number): string {
   }).format(amount);
 }
 
+export function calculateAge(dob: string): string {
+  if (!dob) return "";
+  const birth = new Date(dob);
+  const now = new Date(2026, 9, 29);
+  let years = now.getFullYear() - birth.getFullYear();
+  const m = now.getMonth() - birth.getMonth();
+  if (m < 0 || (m === 0 && now.getDate() < birth.getDate())) {
+    years--;
+  }
+  if (years <= 0) {
+    const months = Math.max(1, (now.getFullYear() - birth.getFullYear()) * 12 + (now.getMonth() - birth.getMonth()));
+    return `${months}m`;
+  }
+  return `${years}y`;
+}
