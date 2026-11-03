@@ -28,6 +28,18 @@ export interface DeliverableRecipient {
   childName: string;
 }
 
+export interface GuardianAudienceRow {
+  guardianId: string;
+  guardianName: string;
+  guardianPhone: string;
+  childrenNames: string[];
+  childrenCount: number;
+  hasConsent: boolean;
+  consentStatus: "opted_in" | "opted_out" | "unverified";
+  lastVisitDate?: string;
+  outstandingBalance?: number;
+}
+
 export interface AudiencePreviewResult {
   totalMatchingChildren: number;
   uniqueMatchingGuardians: number;
@@ -35,6 +47,7 @@ export interface AudiencePreviewResult {
   excludedNoConsentCount: number;
   finalDeliverableCount: number;
   deliverableRecipients: DeliverableRecipient[];
+  guardianRows: GuardianAudienceRow[];
 }
 
 /**
@@ -79,31 +92,65 @@ export function calculateCampaignAudience(
     return true;
   });
 
-  // 2. GUARDIAN-LEVEL DEDUPLICATION
-  // Map keyed by guardianId to enforce 1 message per guardian
-  const uniqueGuardiansMap = new Map<string, AudienceCandidate>();
+  // 2. GUARDIAN-LEVEL GROUPING & DEDUPLICATION
+  const guardiansGroupMap = new Map<
+    string,
+    {
+      candidate: AudienceCandidate;
+      childrenNames: string[];
+      lastVisitDate?: string;
+    }
+  >();
 
   for (const candidate of matchingCandidates) {
-    if (!uniqueGuardiansMap.has(candidate.guardianId)) {
-      uniqueGuardiansMap.set(candidate.guardianId, candidate);
+    const existing = guardiansGroupMap.get(candidate.guardianId);
+    if (!existing) {
+      guardiansGroupMap.set(candidate.guardianId, {
+        candidate,
+        childrenNames: [candidate.fullName],
+        lastVisitDate: candidate.lastVisitDate,
+      });
+    } else {
+      existing.childrenNames.push(candidate.fullName);
+      if (candidate.lastVisitDate) {
+        if (!existing.lastVisitDate || new Date(candidate.lastVisitDate) > new Date(existing.lastVisitDate)) {
+          existing.lastVisitDate = candidate.lastVisitDate;
+        }
+      }
     }
   }
 
   const totalMatchingChildren = matchingCandidates.length;
-  const uniqueMatchingGuardians = uniqueGuardiansMap.size;
+  const uniqueMatchingGuardians = guardiansGroupMap.size;
   const dedupedCount = Math.max(0, totalMatchingChildren - uniqueMatchingGuardians);
 
-  // 3. CONSENT EXCLUSION
+  // 3. CONSENT EVALUATION & GUARDIAN ROWS
   const deliverableRecipients: DeliverableRecipient[] = [];
+  const guardianRows: GuardianAudienceRow[] = [];
   let excludedNoConsentCount = 0;
 
-  for (const guardianCandidate of uniqueGuardiansMap.values()) {
-    if (guardianCandidate.hasConsent) {
+  for (const group of guardiansGroupMap.values()) {
+    const { candidate, childrenNames, lastVisitDate } = group;
+    const consentStatus = candidate.hasConsent ? "opted_in" : "opted_out";
+
+    guardianRows.push({
+      guardianId: candidate.guardianId,
+      guardianName: candidate.guardianName,
+      guardianPhone: candidate.guardianPhone,
+      childrenNames,
+      childrenCount: childrenNames.length,
+      hasConsent: candidate.hasConsent,
+      consentStatus,
+      lastVisitDate,
+      outstandingBalance: candidate.outstandingBalance,
+    });
+
+    if (candidate.hasConsent) {
       deliverableRecipients.push({
-        guardianId: guardianCandidate.guardianId,
-        guardianName: guardianCandidate.guardianName,
-        guardianPhone: guardianCandidate.guardianPhone,
-        childName: guardianCandidate.fullName,
+        guardianId: candidate.guardianId,
+        guardianName: candidate.guardianName,
+        guardianPhone: candidate.guardianPhone,
+        childName: childrenNames[0], // primary matching child name
       });
     } else {
       excludedNoConsentCount++;
@@ -117,5 +164,56 @@ export function calculateCampaignAudience(
     excludedNoConsentCount,
     finalDeliverableCount: deliverableRecipients.length,
     deliverableRecipients,
+    guardianRows,
+  };
+}
+
+/**
+ * Resolves final deliverable campaign recipients strictly on the server.
+ * Never blindly trusts recipient lists provided by the client.
+ */
+export function resolveCampaignRecipients(params: {
+  candidates: AudienceCandidate[];
+  criteria: AudienceCriteria;
+  selectionMode?: "all" | "custom";
+  selectedGuardianIds?: string[];
+  excludedGuardianIds?: string[];
+  referenceDate?: Date;
+}): {
+  deliverableRecipients: DeliverableRecipient[];
+  stats: {
+    totalTargeted: number;
+    dedupedCount: number;
+    excludedNoConsentCount: number;
+    finalDeliverableCount: number;
+  };
+} {
+  const preview = calculateCampaignAudience(
+    params.candidates,
+    params.criteria,
+    params.referenceDate
+  );
+
+  const excludedSet = new Set(params.excludedGuardianIds || []);
+  const selectedSet = params.selectedGuardianIds
+    ? new Set(params.selectedGuardianIds)
+    : null;
+
+  const filteredRecipients = preview.deliverableRecipients.filter((r) => {
+    if (excludedSet.has(r.guardianId)) return false;
+    if (params.selectionMode === "custom" && selectedSet && !selectedSet.has(r.guardianId)) {
+      return false;
+    }
+    return true;
+  });
+
+  return {
+    deliverableRecipients: filteredRecipients,
+    stats: {
+      totalTargeted: preview.totalMatchingChildren,
+      dedupedCount: preview.dedupedCount,
+      excludedNoConsentCount: preview.excludedNoConsentCount,
+      finalDeliverableCount: filteredRecipients.length,
+    },
   };
 }

@@ -1,6 +1,7 @@
 import { isSupabaseConfigured } from "@/lib/env";
 import { createClient } from "@/lib/supabase/server";
 import { whatsappProvider } from "@/lib/providers/whatsapp";
+import { saveMessageLog } from "@/lib/messages-store";
 import type { CampaignDetail, CampaignRecipientDetail } from "@/types/campaigns";
 import type { AudienceCriteria, DeliverableRecipient } from "@/lib/campaign-audience";
 import type { CampaignStatus, CampaignRecipientStatus } from "@/types/database";
@@ -209,6 +210,7 @@ export async function createAndDispatchCampaign({
   criteria,
   audienceRecipients,
   stats,
+  scheduleFor,
 }: {
   title: string;
   templateName: string;
@@ -220,45 +222,98 @@ export async function createAndDispatchCampaign({
     dedupedCount: number;
     excludedNoConsentCount: number;
   };
+  scheduleFor?: string | null;
 }): Promise<CampaignDetail> {
   const campaignId = `cmp-${Date.now()}`;
+  const isScheduled = !!scheduleFor;
   let sentCount = 0;
   let deliveredCount = 0;
   let failedCount = 0;
 
   const recipients: CampaignRecipientDetail[] = [];
 
-  // Dispatch in batches with rate-limiting simulation
-  for (const recipient of audienceRecipients) {
-    const res = await whatsappProvider.sendTemplateMessage(
-      recipient.guardianPhone,
-      templateName,
-      {
-        guardian_name: recipient.guardianName,
-        patient_name: recipient.childName,
+  // Dispatch immediately if not scheduled
+  if (!isScheduled) {
+    for (const recipient of audienceRecipients) {
+      const dedupeKey = `${campaignId}_${recipient.guardianId}`;
+      const res = await whatsappProvider.sendTemplateMessage(
+        recipient.guardianPhone,
+        templateName,
+        {
+          guardian_name: recipient.guardianName,
+          patient_name: recipient.childName,
+        }
+      );
+
+      const isSuccess = res.success;
+      if (isSuccess) {
+        sentCount++;
+        deliveredCount++; // Mock auto-delivers
+      } else {
+        failedCount++;
       }
-    );
 
-    const isSuccess = res.success;
-    if (isSuccess) {
-      sentCount++;
-      deliveredCount++; // Mock auto-delivers
-    } else {
-      failedCount++;
+      recipients.push({
+        id: `rcp-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+        campaignId,
+        guardianId: recipient.guardianId,
+        guardianName: recipient.guardianName,
+        guardianPhone: recipient.guardianPhone,
+        childName: recipient.childName,
+        status: isSuccess ? "delivered" : "failed",
+        sentAt: new Date().toISOString(),
+        deliveredAt: isSuccess ? new Date().toISOString() : undefined,
+        errorMessage: res.error,
+      });
+
+      // Save to messages log with dedupeKey for idempotency
+      await saveMessageLog({
+        id: `msg-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+        guardianId: recipient.guardianId,
+        guardianName: recipient.guardianName,
+        guardianPhone: recipient.guardianPhone,
+        patientName: recipient.childName,
+        templateName,
+        messageBody: `Campaign Message (${templateName})`,
+        status: isSuccess ? "delivered" : "failed",
+        providerMessageId: res.messageId,
+        sentAt: new Date().toISOString(),
+        deliveredAt: isSuccess ? new Date().toISOString() : undefined,
+        dedupeKey,
+        attempts: 1,
+        errorMessage: res.error,
+        isMock: res.isMock,
+      });
     }
+  } else {
+    // Scheduled for future
+    for (const recipient of audienceRecipients) {
+      const dedupeKey = `${campaignId}_${recipient.guardianId}`;
+      recipients.push({
+        id: `rcp-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+        campaignId,
+        guardianId: recipient.guardianId,
+        guardianName: recipient.guardianName,
+        guardianPhone: recipient.guardianPhone,
+        childName: recipient.childName,
+        status: "queued",
+      });
 
-    recipients.push({
-      id: `rcp-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-      campaignId,
-      guardianId: recipient.guardianId,
-      guardianName: recipient.guardianName,
-      guardianPhone: recipient.guardianPhone,
-      childName: recipient.childName,
-      status: isSuccess ? "delivered" : "failed",
-      sentAt: new Date().toISOString(),
-      deliveredAt: isSuccess ? new Date().toISOString() : undefined,
-      errorMessage: res.error,
-    });
+      await saveMessageLog({
+        id: `msg-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+        guardianId: recipient.guardianId,
+        guardianName: recipient.guardianName,
+        guardianPhone: recipient.guardianPhone,
+        patientName: recipient.childName,
+        templateName,
+        messageBody: `Scheduled Campaign (${templateName})`,
+        status: "queued",
+        scheduledFor: scheduleFor,
+        dedupeKey,
+        attempts: 0,
+        isMock: true,
+      });
+    }
   }
 
   const newCampaign: CampaignDetail = {
@@ -266,14 +321,14 @@ export async function createAndDispatchCampaign({
     title,
     templateName,
     category,
-    status: "completed",
+    status: isScheduled ? "scheduled" : "completed",
     targetCriteria: criteria,
     totalTargeted: stats.totalTargeted,
     dedupedCount: stats.dedupedCount,
     excludedNoConsentCount: stats.excludedNoConsentCount,
     sentCount,
     deliveredCount,
-    readCount: Math.round(deliveredCount * 0.7), // Simulated 70% read rate
+    readCount: isScheduled ? 0 : Math.round(deliveredCount * 0.7),
     failedCount,
     createdAt: new Date().toISOString(),
     recipients,
@@ -289,12 +344,12 @@ export async function createAndDispatchCampaign({
         id: campaignId,
         title,
         template_id: templateName,
-        status: "completed",
+        status: isScheduled ? "scheduled" : "completed",
         audience_criteria: criteria as Record<string, unknown>,
         total_target: stats.totalTargeted,
         sent_count: sentCount,
         delivered_count: deliveredCount,
-        read_count: Math.round(deliveredCount * 0.7),
+        read_count: isScheduled ? 0 : Math.round(deliveredCount * 0.7),
         failed_count: failedCount,
       });
 
@@ -312,6 +367,28 @@ export async function createAndDispatchCampaign({
   }
 
   return newCampaign;
+}
+
+export async function sendCampaignTestMessage({
+  templateName,
+  phone,
+  guardianName = "Staff Preview",
+  childName = "Child",
+}: {
+  templateName: string;
+  phone: string;
+  guardianName?: string;
+  childName?: string;
+}): Promise<{ success: boolean; error?: string; messageId?: string }> {
+  return await whatsappProvider.sendTemplateMessage(phone, templateName, {
+    guardian_name: guardianName,
+    patient_name: childName,
+    child_first_name: childName,
+    doctor_name: "Staff Preview",
+    date: "Tomorrow at 10:00 AM",
+    time_slot: "10:00 AM",
+    hospital_address: "Plot 42, Sector 5, Medical Enclave, New Delhi - 110001",
+  });
 }
 
 export async function retryFailedCampaignRecipients(

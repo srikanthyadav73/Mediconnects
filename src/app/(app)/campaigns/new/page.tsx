@@ -1,5 +1,6 @@
 import { fetchAllPatients } from "@/lib/patients-data";
 import { fetchAllInvoices } from "@/lib/billing-store";
+import { getCurrentUser } from "@/lib/auth";
 import type { AudienceCandidate } from "@/lib/campaign-audience";
 import { WizardClient } from "./wizard-client";
 
@@ -8,9 +9,10 @@ export const metadata = {
 };
 
 export default async function NewCampaignPage() {
-  const [patients, invoices] = await Promise.all([
+  const [patients, invoices, currentUser] = await Promise.all([
     fetchAllPatients(),
     fetchAllInvoices(),
+    getCurrentUser(),
   ]);
 
   // Map to candidate structures
@@ -35,6 +37,5 @@ export default async function NewCampaignPage() {
     };
   });
 
-  return <WizardClient candidates={candidates} />;
+  return <WizardClient candidates={candidates} currentUser={currentUser} />;
 }
-

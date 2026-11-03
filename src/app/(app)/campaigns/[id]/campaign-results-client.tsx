@@ -6,8 +6,10 @@ import {
   ArrowLeft,
   RotateCw,
   CheckCheck,
+  Search,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import type { CampaignDetail } from "@/types/campaigns";
@@ -21,6 +23,21 @@ export function CampaignResultsClient({ initialCampaign }: CampaignResultsClient
   const [campaign, setCampaign] = useState<CampaignDetail>(initialCampaign);
   const [isPending, startTransition] = useTransition();
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"all" | "delivered" | "read" | "failed">("all");
+
+  const filteredRecipients = campaign.recipients.filter((r) => {
+    if (statusFilter !== "all" && r.status !== statusFilter) return false;
+    if (searchTerm) {
+      const q = searchTerm.toLowerCase();
+      return (
+        r.guardianName.toLowerCase().includes(q) ||
+        r.childName.toLowerCase().includes(q) ||
+        r.guardianPhone.toLowerCase().includes(q)
+      );
+    }
+    return true;
+  });
 
   const deliveryRate =
     campaign.sentCount > 0
@@ -247,13 +264,43 @@ export function CampaignResultsClient({ initialCampaign }: CampaignResultsClient
 
       {/* Recipient Table */}
       <Card className="border-border shadow-sm">
-        <CardHeader className="p-4 border-b border-border">
-          <CardTitle className="text-sm font-bold text-foreground">
-            Recipient Delivery Log ({campaign.recipients.length})
-          </CardTitle>
-          <CardDescription className="text-xs">
-            Individual delivery status and read receipt confirmations.
-          </CardDescription>
+        <CardHeader className="p-4 border-b border-border flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <CardTitle className="text-sm font-bold text-foreground">
+              Recipient Delivery Log ({filteredRecipients.length} / {campaign.recipients.length})
+            </CardTitle>
+            <CardDescription className="text-xs">
+              Individual delivery status and read receipt confirmations.
+            </CardDescription>
+          </div>
+
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="relative w-44">
+              <Search className="w-3.5 h-3.5 text-muted-foreground absolute left-2.5 top-2.5" />
+              <Input
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Search recipient..."
+                className="pl-8 h-8 text-xs bg-white"
+              />
+            </div>
+
+            <div className="flex items-center gap-1 border border-border rounded-lg p-0.5 bg-muted/30 text-xs">
+              {(["all", "delivered", "read", "failed"] as const).map((st) => (
+                <button
+                  key={st}
+                  onClick={() => setStatusFilter(st)}
+                  className={`px-2.5 py-1 rounded-md text-[11px] font-semibold capitalize transition-all ${
+                    statusFilter === st
+                      ? "bg-white text-primary shadow-xs font-bold"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {st}
+                </button>
+              ))}
+            </div>
+          </div>
         </CardHeader>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
@@ -269,14 +316,14 @@ export function CampaignResultsClient({ initialCampaign }: CampaignResultsClient
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/60">
-                {campaign.recipients.length === 0 ? (
+                {filteredRecipients.length === 0 ? (
                   <tr>
                     <td colSpan={6} className="py-8 text-center text-muted-foreground">
-                      No recipients recorded for this campaign.
+                      No recipients matching current search/status filter.
                     </td>
                   </tr>
                 ) : (
-                  campaign.recipients.map((r) => (
+                  filteredRecipients.map((r) => (
                     <tr key={r.id} className="hover:bg-muted/30">
                       <td className="py-2.5 px-4 font-semibold text-foreground">{r.guardianName}</td>
                       <td className="py-2.5 px-4 font-mono text-muted-foreground">{r.guardianPhone}</td>
