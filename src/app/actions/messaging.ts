@@ -5,7 +5,6 @@ import {
   sendWhatsAppMessage,
   retryMessage,
 } from "@/lib/messages-store";
-import { env } from "@/lib/env";
 
 export async function sendDirectWhatsAppAction(formData: {
   guardianId: string;
@@ -34,24 +33,14 @@ export async function retryFailedMessageAction(messageId: string) {
   }
 }
 
+import { processDueRemindersJob } from "@/lib/appointment-reminders";
+
 export async function triggerManualReminderCronAction() {
   try {
-    const appUrl = env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-    const res = await fetch(`${appUrl}/api/jobs/reminders`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${env.CRON_SECRET}`,
-      },
-    });
-
-    if (!res.ok) {
-      const err = await res.text();
-      return { success: false, error: `Cron trigger failed: ${err}` };
-    }
-
-    const data = await res.json();
+    const summary = await processDueRemindersJob(true);
     revalidatePath("/messages");
-    return { success: true, data };
+    revalidatePath("/appointments");
+    return { success: true, data: summary };
   } catch (err: unknown) {
     return { success: false, error: (err as Error).message || "Manual cron trigger error." };
   }

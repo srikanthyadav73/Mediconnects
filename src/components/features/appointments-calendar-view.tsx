@@ -14,6 +14,9 @@ import {
   Loader2,
   ArrowRight,
   Lock,
+  CheckCheck,
+  MessageSquare,
+
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -49,9 +52,12 @@ import {
   updateAppointmentStatusAction,
   rescheduleAppointmentAction,
   approveAppointmentAction,
+  getAppointmentMessagesAction,
+  retryAppointmentMessageAction,
 } from "@/app/actions/appointments";
 import type { PatientDetailed } from "@/lib/patients-data";
 import type { SessionUser } from "@/lib/auth";
+import type { MessageLogEntry } from "@/types/messaging";
 
 function MiniSparkline({ color }: { color: string }) {
   return (
@@ -83,12 +89,14 @@ interface AppointmentsCalendarViewProps {
   initialAppointments: AppointmentRecord[];
   patients: PatientDetailed[];
   currentUser?: SessionUser | null;
+  initialMessages?: MessageLogEntry[];
 }
 
 export function AppointmentsCalendarView({
   initialAppointments,
   patients,
   currentUser,
+  initialMessages = [],
 }: AppointmentsCalendarViewProps) {
   const [appointments, setAppointments] = React.useState<AppointmentRecord[]>(
     initialAppointments
@@ -122,6 +130,28 @@ export function AppointmentsCalendarView({
   const [rescheduleError, setRescheduleError] = React.useState<string | null>(null);
   const [approvingId, setApprovingId] = React.useState<string | null>(null);
   const [approvalError, setApprovalError] = React.useState<string | null>(null);
+  const [messages, setMessages] = React.useState<MessageLogEntry[]>(initialMessages);
+  const [retryingMessageId, setRetryingMessageId] = React.useState<string | null>(null);
+  const [lifecycleDialogOpen, setLifecycleDialogOpen] = React.useState(false);
+  const [selectedAptForMessages, setSelectedAptForMessages] = React.useState<AppointmentRecord | null>(null);
+
+  const handleRetryMessage = async (messageId: string) => {
+    setRetryingMessageId(messageId);
+    try {
+      const res = await retryAppointmentMessageAction(messageId);
+      if (res.success) {
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === messageId
+              ? { ...m, status: "sent", sentAt: new Date().toISOString(), errorMessage: undefined }
+              : m
+          )
+        );
+      }
+    } finally {
+      setRetryingMessageId(null);
+    }
+  };
 
   const canApprove = (apt: AppointmentRecord) => {
     if (!currentUser) return false;
@@ -149,6 +179,17 @@ export function AppointmentsCalendarView({
         setAppointments((prev) =>
           prev.map((a) => (a.id === aptId ? { ...a, status: "confirmed" } : a))
         );
+        try {
+          const latestMsgs = await getAppointmentMessagesAction(aptId);
+          if (latestMsgs && latestMsgs.length > 0) {
+            setMessages((prev) => {
+              const others = prev.filter((m) => m.appointmentId !== aptId);
+              return [...latestMsgs, ...others];
+            });
+          }
+        } catch {
+          // ignore
+        }
       }
     } catch (err: unknown) {
       setApprovalError((err as Error).message || "An error occurred.");
@@ -558,22 +599,89 @@ export function AppointmentsCalendarView({
                           Awaiting Approval
                         </Badge>
                       ) : (
-                      <Badge
-                        variant={
-                          apt.status === "confirmed"
-                            ? "success"
-                            : apt.status === "completed"
-                            ? "default"
-                            : apt.status === "cancelled"
-                            ? "destructive"
-                            : apt.status === "no_show"
-                            ? "warning"
-                            : "secondary"
-                        }
-                        className="text-[10px] capitalize font-medium"
-                      >
-                        {apt.status.replace("_", " ")}
-                      </Badge>
+                      <div className="space-y-1">
+                        <Badge
+                          variant={
+                            apt.status === "confirmed"
+                              ? "success"
+                              : apt.status === "completed"
+                              ? "default"
+                              : apt.status === "cancelled"
+                              ? "destructive"
+                              : apt.status === "no_show"
+                              ? "warning"
+                              : "secondary"
+                          }
+                          className="text-[10px] capitalize font-medium"
+                        >
+                          {apt.status.replace("_", " ")}
+                        </Badge>
+
+                        {/* WhatsApp Message Lifecycle indicator */}
+                        {apt.status === "confirmed" && (() => {
+                          const aptMsgs = messages.filter((m) => m.appointmentId === apt.id);
+                          const confMsg = aptMsgs.find((m) => m.messageType === "appointment_confirmation");
+                          const hasNoConsent = aptMsgs.some((m) => m.skipReason === "no_consent") || confMsg?.skipReason === "no_consent";
+                          const hasFailed = aptMsgs.some((m) => m.status === "failed" && m.skipReason !== "no_consent");
+                          const queuedReminders = aptMsgs.filter((m) => m.status === "queued" && m.scheduledFor);
+
+                          if (hasNoConsent) {
+                            return (
+                              <span
+                                className="inline-flex items-center gap-1 text-[10px] font-semibold text-rose-700 bg-rose-50 border border-rose-200 px-1.5 py-0.5 rounded cursor-default"
+                                title="Parent has not opted-in to WhatsApp updates. Staff may phone the parent."
+                              >
+                                <AlertCircle className="w-2.5 h-2.5 text-rose-600 shrink-0" />
+                                Not sent: no consent
+                              </span>
+                            );
+                          }
+
+                          if (hasFailed) {
+                            const failedMsg = aptMsgs.find((m) => m.status === "failed" && m.skipReason !== "no_consent");
+                            return (
+                              <div className="flex items-center gap-1">
+                                <span className="text-[10px] font-semibold text-rose-700 bg-rose-50 border border-rose-200 px-1.5 py-0.5 rounded">
+                                  Msg failed
+                                </span>
+                                {failedMsg && (
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    disabled={retryingMessageId === failedMsg.id}
+                                    className="h-5 px-1 text-[10px] font-bold text-rose-700 hover:bg-rose-100"
+                                    onClick={() => handleRetryMessage(failedMsg.id)}
+                                  >
+                                    {retryingMessageId === failedMsg.id ? (
+                                      <Loader2 className="w-2.5 h-2.5 animate-spin" />
+                                    ) : (
+                                      "Retry"
+                                    )}
+                                  </Button>
+                                )}
+                              </div>
+                            );
+                          }
+
+                          return (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSelectedAptForMessages(apt);
+                                setLifecycleDialogOpen(true);
+                              }}
+                              className="inline-flex items-center gap-1 text-[10px] font-semibold text-teal-800 bg-teal-50 hover:bg-teal-100 border border-teal-200 px-1.5 py-0.5 rounded transition-colors"
+                              title="View WhatsApp confirmation & reminder schedule"
+                            >
+                              <CheckCheck className="w-2.5 h-2.5 text-teal-600" />
+                              WhatsApp Trail
+                              {queuedReminders.length > 0 && (
+                                <span className="text-[9px] text-teal-700 font-normal">({queuedReminders.length} rem)</span>
+                              )}
+                            </button>
+                          );
+                        })()}
+                      </div>
                       )}
                     </TableCell>
 
@@ -1066,6 +1174,125 @@ export function AppointmentsCalendarView({
         </DialogContent>
       </Dialog>
 
+      {/* APPOINTMENT WHATSAPP LIFECYCLE MODAL (PHASE 4) */}
+      <Dialog open={lifecycleDialogOpen} onOpenChange={setLifecycleDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-base font-bold text-foreground flex items-center gap-2">
+              <MessageSquare className="w-4 h-4 text-teal-700" />
+              WhatsApp Communication Trail
+            </DialogTitle>
+            <DialogDescription className="text-xs">
+              Lifecycle status of confirmation and automated reminders for this appointment.
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedAptForMessages && (() => {
+            const aptMsgs = messages.filter((m) => m.appointmentId === selectedAptForMessages.id);
+            return (
+              <div className="space-y-3 py-1 text-xs">
+                {/* Patient Summary Header */}
+                <div className="p-3 bg-teal-50/70 border border-teal-200 rounded-lg text-teal-950 space-y-1">
+                  <div className="flex justify-between font-bold text-sm">
+                    <span>{selectedAptForMessages.patientName}</span>
+                    <span className="font-mono text-xs">{selectedAptForMessages.appointmentDate} @ {selectedAptForMessages.startTime}</span>
+                  </div>
+                  <div className="text-[11px] text-teal-800 flex justify-between">
+                    <span>Guardian: {selectedAptForMessages.guardianName} ({selectedAptForMessages.guardianPhone})</span>
+                    <span>{selectedAptForMessages.doctorName}</span>
+                  </div>
+                </div>
+
+                {/* Messages Trail */}
+                <div className="space-y-2">
+                  <div className="text-xs font-bold text-foreground">Message Lifecycle Log</div>
+                  {aptMsgs.length === 0 ? (
+                    <div className="p-4 rounded-lg bg-muted/30 text-center text-muted-foreground text-xs">
+                      No messages recorded yet. Approving the appointment will trigger immediate confirmation.
+                    </div>
+                  ) : (
+                    aptMsgs.map((msg) => (
+                      <div
+                        key={msg.id}
+                        className={`p-3 rounded-lg border text-xs space-y-1.5 ${
+                          msg.status === "sent" || msg.status === "delivered" || msg.status === "read"
+                            ? "bg-emerald-50/50 border-emerald-200 text-emerald-950"
+                            : msg.status === "failed"
+                            ? "bg-rose-50/50 border-rose-200 text-rose-950"
+                            : "bg-teal-50/30 border-teal-200 text-teal-950"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="font-bold capitalize flex items-center gap-1.5">
+                            {msg.messageType?.replace(/_/g, " ") || msg.templateName}
+                          </span>
+                          <div className="flex items-center gap-1.5">
+                            <Badge
+                              variant={
+                                msg.status === "sent" || msg.status === "delivered" || msg.status === "read"
+                                  ? "default"
+                                  : msg.status === "failed"
+                                  ? "destructive"
+                                  : "secondary"
+                              }
+                              className="text-[9px] capitalize"
+                            >
+                              {msg.skipReason === "no_consent" ? "No Consent" : msg.status}
+                            </Badge>
+                            {msg.status === "failed" && msg.skipReason !== "no_consent" && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                disabled={retryingMessageId === msg.id}
+                                onClick={() => handleRetryMessage(msg.id)}
+                                className="h-5 px-1.5 text-[10px] font-bold text-rose-700 border-rose-300 hover:bg-rose-100"
+                              >
+                                {retryingMessageId === msg.id ? (
+                                  <Loader2 className="w-2.5 h-2.5 animate-spin" />
+                                ) : (
+                                  "Retry"
+                                )}
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                        <p className="text-[11px] text-muted-foreground leading-relaxed">
+                          {msg.messageBody}
+                        </p>
+                        <div className="text-[10px] text-muted-foreground flex justify-between pt-1 border-t border-border/40">
+                          <span>
+                            {msg.sentAt
+                              ? `Sent: ${new Date(msg.sentAt).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}`
+                              : msg.scheduledFor
+                              ? `Scheduled: ${new Date(msg.scheduledFor).toLocaleDateString("en-IN", { day: "2-digit", month: "short" })} at ${new Date(msg.scheduledFor).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}`
+                              : ""}
+                          </span>
+                          {msg.skipReason && (
+                            <span className="font-semibold text-rose-600">
+                              Reason: {msg.skipReason}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            );
+          })()}
+
+          <DialogFooter className="pt-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setLifecycleDialogOpen(false)}
+              className="text-xs"
+            >
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       {/* 5. BOTTOM CONFIDENTIALITY BANNER */}
       <div className="p-3 bg-[#e8f7f4] border border-[#b2e2d8] rounded-xl flex items-center gap-2.5 text-xs text-[#0f6055] font-medium">
         <Lock className="w-4 h-4 text-[#0f766e] shrink-0" />

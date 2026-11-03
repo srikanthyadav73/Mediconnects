@@ -14,6 +14,8 @@ import {
   CheckCircle2,
   AlertCircle,
   Download,
+  Bell,
+  Clock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,7 +37,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { SessionUser } from "@/lib/auth";
-import type { HospitalProfile, AuditLogItem } from "@/lib/settings-store";
+import type { HospitalProfile, AuditLogItem, AppointmentMessageSettings } from "@/lib/settings-store";
 import type { HospitalServiceItem } from "@/types/billing";
 import type { UserRole } from "@/types/database";
 import {
@@ -44,6 +46,7 @@ import {
   addServiceTariffAction,
   updateStaffRoleAction,
   addStaffUserAction,
+  updateAppointmentMessageSettingsAction,
 } from "@/app/actions/settings";
 import { downloadCSV } from "@/lib/csv-export";
 
@@ -53,6 +56,7 @@ interface SettingsClientProps {
   initialTariffs: HospitalServiceItem[];
   initialStaff: SessionUser[];
   auditLogs: AuditLogItem[];
+  initialAppointmentSettings?: AppointmentMessageSettings;
 }
 
 export function SettingsClient({
@@ -61,10 +65,11 @@ export function SettingsClient({
   initialTariffs,
   initialStaff,
   auditLogs,
+  initialAppointmentSettings,
 }: SettingsClientProps) {
   const isAdmin = currentUser?.role === "admin";
   const [activeTab, setActiveTab] = useState<
-    "profile" | "tariffs" | "staff" | "audit" | "privacy"
+    "profile" | "tariffs" | "staff" | "audit" | "privacy" | "messaging"
   >("profile");
 
   // Hospital Profile State
@@ -86,7 +91,33 @@ export function SettingsClient({
   const [newStaffRole, setNewStaffRole] = useState<UserRole>("doctor");
 
   // Audit Logs State
-  const [auditSearch, setAuditSearch] = useState("");
+    const [auditSearch, setAuditSearch] = useState("");
+  const [apptSettings, setApptSettings] = useState<AppointmentMessageSettings>(
+    initialAppointmentSettings || {
+      autoMessagesEnabled: true,
+      sameDayReminderEnabled: true,
+      eveningBeforeReminderEnabled: true,
+      eveningReminderTime: "18:00",
+      quietHoursStart: "21:00",
+      quietHoursEnd: "07:00",
+      hospitalAddress: "Plot 42, Sector 5, Medical Enclave, New Delhi - 110001",
+    }
+  );
+
+  const handleSaveMessagingSettings = (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMessage(null);
+    startTransition(async () => {
+      const res = await updateAppointmentMessageSettingsAction(apptSettings);
+      if (res.success && res.settings) {
+        setApptSettings(res.settings);
+        setSuccessMessage("Appointment messaging settings updated successfully.");
+        setTimeout(() => setSuccessMessage(null), 3000);
+      } else {
+        setErrorMessage(res.error || "Failed to update messaging settings.");
+      }
+    });
+  };
 
   const [isPending, startTransition] = useTransition();
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -282,7 +313,8 @@ export function SettingsClient({
           { id: "tariffs", label: "Tariff Master & Fees", icon: Receipt },
           { id: "staff", label: "Staff & Roles", icon: Users },
           { id: "audit", label: "Audit Log Trail", icon: ShieldCheck },
-          { id: "privacy", label: "DPDP & Privacy Notice", icon: FileText },
+                    { id: "privacy", label: "DPDP & Privacy Notice", icon: FileText },
+          { id: "messaging", label: "Appointment Messaging", icon: Bell },
         ].map((t) => {
           const Icon = t.icon;
           return (
@@ -755,7 +787,167 @@ export function SettingsClient({
         </Card>
       )}
 
-      {/* Add Tariff Dialog */}
+            {/* TAB 6: APPOINTMENT MESSAGING AUTOMATION (PHASE 5) */}
+      {activeTab === "messaging" && (
+        <Card className="border-border shadow-sm">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-base font-bold text-foreground">
+                  Automatic Appointment Messages & Reminder Rules
+                </CardTitle>
+                <CardDescription className="text-xs">
+                  Configure timing, quiet hours, and automated WhatsApp appointment confirmations & reminders.
+                </CardDescription>
+              </div>
+              {!isAdmin && (
+                <Badge variant="outline" className="text-xs gap-1 border-amber-300 text-amber-800 bg-amber-50">
+                  <Lock className="w-3 h-3" /> Read Only (Admin Required)
+                </Badge>
+              )}
+            </div>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSaveMessagingSettings} className="space-y-6">
+              {/* Global Master Toggle */}
+              <div className="flex items-center justify-between p-4 rounded-xl border border-teal-200 bg-teal-50/60">
+                <div className="space-y-0.5">
+                  <div className="text-xs font-bold text-teal-950 flex items-center gap-2">
+                    <Bell className="w-4 h-4 text-teal-700" />
+                    Enable Automatic Appointment Messages
+                  </div>
+                  <div className="text-[11px] text-teal-800">
+                    Automatically enqueue immediate confirmation upon doctor/admin approval and schedule upcoming reminders.
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  disabled={!isAdmin}
+                  onClick={() => setApptSettings((prev) => ({ ...prev, autoMessagesEnabled: !prev.autoMessagesEnabled }))}
+                  className={`w-12 h-6 flex items-center rounded-full p-1 transition-colors ${
+                    apptSettings.autoMessagesEnabled ? "bg-teal-700 justify-end" : "bg-zinc-300 justify-start"
+                  }`}
+                >
+                  <span className="bg-white w-4 h-4 rounded-full shadow-md transform transition-transform" />
+                </button>
+              </div>
+
+              {/* Reminder Rules Configuration */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Same-Day Reminder */}
+                <div className="p-4 rounded-xl border border-border bg-card space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-foreground">Same-Day Reminder</span>
+                    <button
+                      type="button"
+                      disabled={!isAdmin}
+                      onClick={() => setApptSettings((prev) => ({ ...prev, sameDayReminderEnabled: !prev.sameDayReminderEnabled }))}
+                      className={`w-10 h-5 flex items-center rounded-full p-0.5 transition-colors ${
+                        apptSettings.sameDayReminderEnabled ? "bg-primary justify-end" : "bg-zinc-300 justify-start"
+                      }`}
+                    >
+                      <span className="bg-white w-4 h-4 rounded-full shadow-md" />
+                    </button>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground leading-relaxed">
+                    Slots before 10:00 trigger at 07:00 IST; 10:00 to 13:00 at 07:30 IST; later slots at slot time minus 2.5 hours (never earlier than 07:00).
+                  </p>
+                </div>
+
+                {/* Evening-Before Reminder */}
+                <div className="p-4 rounded-xl border border-border bg-card space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-foreground">Evening-Before Reminder</span>
+                    <button
+                      type="button"
+                      disabled={!isAdmin}
+                      onClick={() => setApptSettings((prev) => ({ ...prev, eveningBeforeReminderEnabled: !prev.eveningBeforeReminderEnabled }))}
+                      className={`w-10 h-5 flex items-center rounded-full p-0.5 transition-colors ${
+                        apptSettings.eveningBeforeReminderEnabled ? "bg-primary justify-end" : "bg-zinc-300 justify-start"
+                      }`}
+                    >
+                      <span className="bg-white w-4 h-4 rounded-full shadow-md" />
+                    </button>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-semibold text-foreground">Evening Reminder Time (IST)</label>
+                    <Input
+                      type="time"
+                      disabled={!isAdmin}
+                      value={apptSettings.eveningReminderTime}
+                      onChange={(e) => setApptSettings((prev) => ({ ...prev, eveningReminderTime: e.target.value }))}
+                      className="h-8 text-xs font-mono w-32"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Quiet Hours Window */}
+              <div className="p-4 rounded-xl border border-border bg-muted/20 space-y-3">
+                <div>
+                  <span className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                    <Clock className="w-4 h-4 text-primary" />
+                    Quiet Hours Window
+                  </span>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">
+                    Reminders are never dispatched between these hours to respect family quiet time. Confirmations are exempt.
+                  </p>
+                </div>
+                <div className="flex items-center gap-4">
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-semibold text-foreground">Quiet Hours Start</label>
+                    <Input
+                      type="time"
+                      disabled={!isAdmin}
+                      value={apptSettings.quietHoursStart}
+                      onChange={(e) => setApptSettings((prev) => ({ ...prev, quietHoursStart: e.target.value }))}
+                      className="h-8 text-xs font-mono w-32 bg-white"
+                    />
+                  </div>
+                  <span className="text-xs text-muted-foreground pt-4">to</span>
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-semibold text-foreground">Quiet Hours End</label>
+                    <Input
+                      type="time"
+                      disabled={!isAdmin}
+                      value={apptSettings.quietHoursEnd}
+                      onChange={(e) => setApptSettings((prev) => ({ ...prev, quietHoursEnd: e.target.value }))}
+                      className="h-8 text-xs font-mono w-32 bg-white"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Hospital Address String */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-foreground">
+                  Hospital Address String (Printed in WhatsApp Templates)
+                </label>
+                <Input
+                  disabled={!isAdmin}
+                  value={apptSettings.hospitalAddress}
+                  onChange={(e) => setApptSettings((prev) => ({ ...prev, hospitalAddress: e.target.value }))}
+                  placeholder="Plot 42, Sector 5, Medical Enclave, New Delhi - 110001"
+                  className="text-xs"
+                />
+                <p className="text-[11px] text-muted-foreground">
+                  Substituted into the {"{{hospital_address}}"} template variable for confirmations and reminders.
+                </p>
+              </div>
+
+              {isAdmin && (
+                <div className="flex justify-end pt-2">
+                  <Button type="submit" disabled={isPending} className="text-xs gap-1.5 font-bold">
+                    <Save className="w-3.5 h-3.5" />
+                    {isPending ? "Saving..." : "Save Messaging Settings"}
+                  </Button>
+                </div>
+              )}
+            </form>
+          </CardContent>
+        </Card>
+      )}
+{/* Add Tariff Dialog */}
       <Dialog open={newServiceOpen} onOpenChange={setNewServiceOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>

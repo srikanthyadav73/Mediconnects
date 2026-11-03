@@ -4,6 +4,7 @@ import {
   getTariffServices,
   getStaffUsers,
   getAuditLogs,
+  getAppointmentMessageSettings,
 } from "@/lib/settings-store";
 import { SettingsClient } from "./settings-client";
 
@@ -12,12 +13,13 @@ export const metadata = {
 };
 
 export default async function SettingsPage() {
-  const [currentUser, profile, tariffs, staff, auditLogs] = await Promise.all([
+  const [currentUser, profile, tariffs, staff, auditLogs, appointmentSettings] = await Promise.all([
     getCurrentUser(),
     getHospitalProfile(),
     getTariffServices(),
     getStaffUsers(),
     getAuditLogs(),
+    getAppointmentMessageSettings(),
   ]);
 
   return (
@@ -27,7 +29,7 @@ export default async function SettingsPage() {
       initialTariffs={tariffs}
       initialStaff={staff}
       auditLogs={auditLogs}
+      initialAppointmentSettings={appointmentSettings}
     />
   );
 }
-

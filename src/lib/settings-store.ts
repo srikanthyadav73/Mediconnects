@@ -31,6 +31,26 @@ export interface AuditLogItem {
   details: string;
 }
 
+export interface AppointmentMessageSettings {
+  autoMessagesEnabled: boolean;
+  sameDayReminderEnabled: boolean;
+  eveningBeforeReminderEnabled: boolean;
+  eveningReminderTime: string; // "18:00"
+  quietHoursStart: string; // "21:00"
+  quietHoursEnd: string; // "07:00"
+  hospitalAddress: string;
+}
+
+let inMemoryAppointmentSettings: AppointmentMessageSettings = {
+  autoMessagesEnabled: true,
+  sameDayReminderEnabled: true,
+  eveningBeforeReminderEnabled: true,
+  eveningReminderTime: "18:00",
+  quietHoursStart: "21:00",
+  quietHoursEnd: "07:00",
+  hospitalAddress: "Plot 42, Sector 5, Medical Enclave, New Delhi - 110001",
+};
+
 let inMemoryProfile: HospitalProfile = {
   hospitalName: "MediConnect Children's Hospital",
   tagline: "Center for Pediatric Excellence & Compassionate Child Care",
@@ -161,4 +181,19 @@ export async function addStaffUser(user: SessionUser): Promise<SessionUser[]> {
 export async function getAuditLogs(): Promise<AuditLogItem[]> {
   return inMemoryAuditLogs;
 }
+
+export async function getAppointmentMessageSettings(): Promise<AppointmentMessageSettings> {
+  return { ...inMemoryAppointmentSettings };
+}
+
+export async function updateAppointmentMessageSettings(
+  settings: Partial<AppointmentMessageSettings>
+): Promise<AppointmentMessageSettings> {
+  inMemoryAppointmentSettings = {
+    ...inMemoryAppointmentSettings,
+    ...settings,
+  };
+  return { ...inMemoryAppointmentSettings };
+}
+
 

@@ -8,7 +8,10 @@ import {
   addTariffService,
   updateStaffRole,
   addStaffUser,
+  getAppointmentMessageSettings,
+  updateAppointmentMessageSettings,
   type HospitalProfile,
+  type AppointmentMessageSettings,
 } from "@/lib/settings-store";
 import type { HospitalServiceItem } from "@/types/billing";
 import type { UserRole } from "@/types/database";
@@ -106,6 +109,33 @@ export async function addStaffUserAction(data: { email: string; fullName: string
     return { success: true, staff };
   } catch (err: unknown) {
     return { success: false, error: (err as Error).message || "Failed to add staff user." };
+  }
+}
+
+export async function getAppointmentMessageSettingsAction() {
+  return await getAppointmentMessageSettings();
+}
+
+export async function updateAppointmentMessageSettingsAction(
+  data: Partial<AppointmentMessageSettings>
+) {
+  try {
+    const user = await getCurrentUser();
+    if (user?.role !== "admin") {
+      return {
+        success: false,
+        error: "Unauthorized: Only administrators can modify appointment messaging rules.",
+      };
+    }
+
+    const updated = await updateAppointmentMessageSettings(data);
+    revalidatePath("/settings");
+    return { success: true, settings: updated };
+  } catch (err: unknown) {
+    return {
+      success: false,
+      error: (err as Error).message || "Failed to update messaging settings.",
+    };
   }
 }
 

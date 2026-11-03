@@ -19,6 +19,7 @@ export type PaymentMethod = "cash" | "upi" | "card" | "razorpay";
 export type PaymentStatus = "pending" | "paid" | "failed" | "refunded";
 export type MessageCategory = "utility" | "marketing";
 export type MessageStatus = "queued" | "sent" | "delivered" | "read" | "failed";
+export type MessageType = "appointment_confirmation" | "reminder_evening_before" | "reminder_same_day" | "appointment_cancelled" | "appointment_rescheduled";
 export type CampaignStatus = "draft" | "scheduled" | "running" | "completed" | "cancelled";
 export type CampaignRecipientStatus = "queued" | "sent" | "delivered" | "read" | "failed" | "excluded_no_consent";
 
@@ -37,12 +38,26 @@ export type Database = {
           user_id: string;
           role: UserRole;
           created_at?: string;
+          appointment_id?: string | null;
+          message_type?: MessageType | null;
+          scheduled_for?: string | null;
+          dedupe_key?: string | null;
+          skip_reason?: string | null;
+          attempts?: number;
+          last_error?: string | null;
         };
         Update: {
           id?: string;
           user_id?: string;
           role?: UserRole;
           created_at?: string;
+          appointment_id?: string | null;
+          message_type?: MessageType | null;
+          scheduled_for?: string | null;
+          dedupe_key?: string | null;
+          skip_reason?: string | null;
+          attempts?: number;
+          last_error?: string | null;
         };
         Relationships: [];
       };
@@ -65,6 +80,13 @@ export type Database = {
           specialization?: string | null;
           is_active?: boolean;
           created_at?: string;
+          appointment_id?: string | null;
+          message_type?: MessageType | null;
+          scheduled_for?: string | null;
+          dedupe_key?: string | null;
+          skip_reason?: string | null;
+          attempts?: number;
+          last_error?: string | null;
           updated_at?: string;
         };
         Update: {
@@ -75,6 +97,13 @@ export type Database = {
           specialization?: string | null;
           is_active?: boolean;
           created_at?: string;
+          appointment_id?: string | null;
+          message_type?: MessageType | null;
+          scheduled_for?: string | null;
+          dedupe_key?: string | null;
+          skip_reason?: string | null;
+          attempts?: number;
+          last_error?: string | null;
           updated_at?: string;
         };
         Relationships: [];
@@ -98,6 +127,13 @@ export type Database = {
           address?: string | null;
           relationship?: string;
           created_at?: string;
+          appointment_id?: string | null;
+          message_type?: MessageType | null;
+          scheduled_for?: string | null;
+          dedupe_key?: string | null;
+          skip_reason?: string | null;
+          attempts?: number;
+          last_error?: string | null;
           updated_at?: string;
         };
         Update: {
@@ -108,6 +144,13 @@ export type Database = {
           address?: string | null;
           relationship?: string;
           created_at?: string;
+          appointment_id?: string | null;
+          message_type?: MessageType | null;
+          scheduled_for?: string | null;
+          dedupe_key?: string | null;
+          skip_reason?: string | null;
+          attempts?: number;
+          last_error?: string | null;
           updated_at?: string;
         };
         Relationships: [];
@@ -137,6 +180,13 @@ export type Database = {
           allergies?: string[];
           medical_notes?: string | null;
           created_at?: string;
+          appointment_id?: string | null;
+          message_type?: MessageType | null;
+          scheduled_for?: string | null;
+          dedupe_key?: string | null;
+          skip_reason?: string | null;
+          attempts?: number;
+          last_error?: string | null;
           updated_at?: string;
         };
         Update: {
@@ -150,6 +200,13 @@ export type Database = {
           allergies?: string[];
           medical_notes?: string | null;
           created_at?: string;
+          appointment_id?: string | null;
+          message_type?: MessageType | null;
+          scheduled_for?: string | null;
+          dedupe_key?: string | null;
+          skip_reason?: string | null;
+          attempts?: number;
+          last_error?: string | null;
           updated_at?: string;
         };
         Relationships: [];
@@ -178,6 +235,13 @@ export type Database = {
           prescription?: string | null;
           notes?: string | null;
           created_at?: string;
+          appointment_id?: string | null;
+          message_type?: MessageType | null;
+          scheduled_for?: string | null;
+          dedupe_key?: string | null;
+          skip_reason?: string | null;
+          attempts?: number;
+          last_error?: string | null;
         };
         Update: {
           id?: string;
@@ -190,6 +254,13 @@ export type Database = {
           prescription?: string | null;
           notes?: string | null;
           created_at?: string;
+          appointment_id?: string | null;
+          message_type?: MessageType | null;
+          scheduled_for?: string | null;
+          dedupe_key?: string | null;
+          skip_reason?: string | null;
+          attempts?: number;
+          last_error?: string | null;
         };
         Relationships: [];
       };
@@ -218,6 +289,13 @@ export type Database = {
           status?: AppointmentStatus;
           reason?: string | null;
           created_at?: string;
+          appointment_id?: string | null;
+          message_type?: MessageType | null;
+          scheduled_for?: string | null;
+          dedupe_key?: string | null;
+          skip_reason?: string | null;
+          attempts?: number;
+          last_error?: string | null;
           updated_at?: string;
         };
         Update: {
@@ -231,6 +309,13 @@ export type Database = {
           status?: AppointmentStatus;
           reason?: string | null;
           created_at?: string;
+          appointment_id?: string | null;
+          message_type?: MessageType | null;
+          scheduled_for?: string | null;
+          dedupe_key?: string | null;
+          skip_reason?: string | null;
+          attempts?: number;
+          last_error?: string | null;
           updated_at?: string;
         };
         Relationships: [];
@@ -263,6 +348,13 @@ export type Database = {
           status?: EnquiryStatus;
           converted_patient_id?: string | null;
           created_at?: string;
+          appointment_id?: string | null;
+          message_type?: MessageType | null;
+          scheduled_for?: string | null;
+          dedupe_key?: string | null;
+          skip_reason?: string | null;
+          attempts?: number;
+          last_error?: string | null;
         };
         Update: {
           id?: string;
@@ -277,6 +369,13 @@ export type Database = {
           status?: EnquiryStatus;
           converted_patient_id?: string | null;
           created_at?: string;
+          appointment_id?: string | null;
+          message_type?: MessageType | null;
+          scheduled_for?: string | null;
+          dedupe_key?: string | null;
+          skip_reason?: string | null;
+          attempts?: number;
+          last_error?: string | null;
         };
         Relationships: [];
       };
@@ -296,6 +395,13 @@ export type Database = {
           status: ConsentStatus;
           source: ConsentSource;
           created_at?: string;
+          appointment_id?: string | null;
+          message_type?: MessageType | null;
+          scheduled_for?: string | null;
+          dedupe_key?: string | null;
+          skip_reason?: string | null;
+          attempts?: number;
+          last_error?: string | null;
         };
         Update: {
           id?: string;
@@ -304,6 +410,13 @@ export type Database = {
           status?: ConsentStatus;
           source?: ConsentSource;
           created_at?: string;
+          appointment_id?: string | null;
+          message_type?: MessageType | null;
+          scheduled_for?: string | null;
+          dedupe_key?: string | null;
+          skip_reason?: string | null;
+          attempts?: number;
+          last_error?: string | null;
         };
         Relationships: [];
       };
@@ -323,6 +436,13 @@ export type Database = {
           default_fee: number;
           is_active?: boolean;
           created_at?: string;
+          appointment_id?: string | null;
+          message_type?: MessageType | null;
+          scheduled_for?: string | null;
+          dedupe_key?: string | null;
+          skip_reason?: string | null;
+          attempts?: number;
+          last_error?: string | null;
         };
         Update: {
           id?: string;
@@ -331,6 +451,13 @@ export type Database = {
           default_fee?: number;
           is_active?: boolean;
           created_at?: string;
+          appointment_id?: string | null;
+          message_type?: MessageType | null;
+          scheduled_for?: string | null;
+          dedupe_key?: string | null;
+          skip_reason?: string | null;
+          attempts?: number;
+          last_error?: string | null;
         };
         Relationships: [];
       };
@@ -362,6 +489,13 @@ export type Database = {
           status?: InvoiceStatus;
           due_date?: string;
           created_at?: string;
+          appointment_id?: string | null;
+          message_type?: MessageType | null;
+          scheduled_for?: string | null;
+          dedupe_key?: string | null;
+          skip_reason?: string | null;
+          attempts?: number;
+          last_error?: string | null;
         };
         Update: {
           id?: string;
@@ -376,6 +510,13 @@ export type Database = {
           status?: InvoiceStatus;
           due_date?: string;
           created_at?: string;
+          appointment_id?: string | null;
+          message_type?: MessageType | null;
+          scheduled_for?: string | null;
+          dedupe_key?: string | null;
+          skip_reason?: string | null;
+          attempts?: number;
+          last_error?: string | null;
         };
         Relationships: [];
       };
@@ -435,6 +576,13 @@ export type Database = {
           razorpay_signature?: string | null;
           notes?: string | null;
           created_at?: string;
+          appointment_id?: string | null;
+          message_type?: MessageType | null;
+          scheduled_for?: string | null;
+          dedupe_key?: string | null;
+          skip_reason?: string | null;
+          attempts?: number;
+          last_error?: string | null;
         };
         Update: {
           id?: string;
@@ -448,6 +596,13 @@ export type Database = {
           razorpay_signature?: string | null;
           notes?: string | null;
           created_at?: string;
+          appointment_id?: string | null;
+          message_type?: MessageType | null;
+          scheduled_for?: string | null;
+          dedupe_key?: string | null;
+          skip_reason?: string | null;
+          attempts?: number;
+          last_error?: string | null;
         };
         Relationships: [];
       };
@@ -471,6 +626,13 @@ export type Database = {
           variables?: string[];
           approval_status?: "approved" | "pending" | "rejected";
           created_at?: string;
+          appointment_id?: string | null;
+          message_type?: MessageType | null;
+          scheduled_for?: string | null;
+          dedupe_key?: string | null;
+          skip_reason?: string | null;
+          attempts?: number;
+          last_error?: string | null;
         };
         Update: {
           id?: string;
@@ -481,6 +643,13 @@ export type Database = {
           variables?: string[];
           approval_status?: "approved" | "pending" | "rejected";
           created_at?: string;
+          appointment_id?: string | null;
+          message_type?: MessageType | null;
+          scheduled_for?: string | null;
+          dedupe_key?: string | null;
+          skip_reason?: string | null;
+          attempts?: number;
+          last_error?: string | null;
         };
         Relationships: [];
       };
@@ -500,6 +669,13 @@ export type Database = {
           delivered_at: string | null;
           read_at: string | null;
           created_at: string;
+          appointment_id: string | null;
+          message_type: MessageType | null;
+          scheduled_for: string | null;
+          dedupe_key: string | null;
+          skip_reason: string | null;
+          attempts: number;
+          last_error: string | null;
         };
         Insert: {
           id?: string;
@@ -516,6 +692,27 @@ export type Database = {
           delivered_at?: string | null;
           read_at?: string | null;
           created_at?: string;
+          appointment_id?: string | null;
+          message_type?: MessageType | null;
+          scheduled_for?: string | null;
+          dedupe_key?: string | null;
+          skip_reason?: string | null;
+          attempts?: number;
+          last_error?: string | null;
+          appointment_id?: string | null;
+          message_type?: MessageType | null;
+          scheduled_for?: string | null;
+          dedupe_key?: string | null;
+          skip_reason?: string | null;
+          attempts?: number;
+          last_error?: string | null;
+          appointment_id?: string | null;
+          message_type?: MessageType | null;
+          scheduled_for?: string | null;
+          dedupe_key?: string | null;
+          skip_reason?: string | null;
+          attempts?: number;
+          last_error?: string | null;
         };
         Update: {
           id?: string;
@@ -532,6 +729,13 @@ export type Database = {
           delivered_at?: string | null;
           read_at?: string | null;
           created_at?: string;
+          appointment_id?: string | null;
+          message_type?: MessageType | null;
+          scheduled_for?: string | null;
+          dedupe_key?: string | null;
+          skip_reason?: string | null;
+          attempts?: number;
+          last_error?: string | null;
         };
         Relationships: [];
       };
@@ -563,6 +767,13 @@ export type Database = {
           end_date: string;
           is_active?: boolean;
           created_at?: string;
+          appointment_id?: string | null;
+          message_type?: MessageType | null;
+          scheduled_for?: string | null;
+          dedupe_key?: string | null;
+          skip_reason?: string | null;
+          attempts?: number;
+          last_error?: string | null;
         };
         Update: {
           id?: string;
@@ -577,6 +788,13 @@ export type Database = {
           end_date?: string;
           is_active?: boolean;
           created_at?: string;
+          appointment_id?: string | null;
+          message_type?: MessageType | null;
+          scheduled_for?: string | null;
+          dedupe_key?: string | null;
+          skip_reason?: string | null;
+          attempts?: number;
+          last_error?: string | null;
         };
         Relationships: [];
       };
@@ -608,6 +826,13 @@ export type Database = {
           read_count?: number;
           failed_count?: number;
           created_at?: string;
+          appointment_id?: string | null;
+          message_type?: MessageType | null;
+          scheduled_for?: string | null;
+          dedupe_key?: string | null;
+          skip_reason?: string | null;
+          attempts?: number;
+          last_error?: string | null;
         };
         Update: {
           id?: string;
@@ -622,6 +847,13 @@ export type Database = {
           read_count?: number;
           failed_count?: number;
           created_at?: string;
+          appointment_id?: string | null;
+          message_type?: MessageType | null;
+          scheduled_for?: string | null;
+          dedupe_key?: string | null;
+          skip_reason?: string | null;
+          attempts?: number;
+          last_error?: string | null;
         };
         Relationships: [];
       };
@@ -645,6 +877,13 @@ export type Database = {
           message_id?: string | null;
           error_reason?: string | null;
           created_at?: string;
+          appointment_id?: string | null;
+          message_type?: MessageType | null;
+          scheduled_for?: string | null;
+          dedupe_key?: string | null;
+          skip_reason?: string | null;
+          attempts?: number;
+          last_error?: string | null;
         };
         Update: {
           id?: string;
@@ -655,6 +894,13 @@ export type Database = {
           message_id?: string | null;
           error_reason?: string | null;
           created_at?: string;
+          appointment_id?: string | null;
+          message_type?: MessageType | null;
+          scheduled_for?: string | null;
+          dedupe_key?: string | null;
+          skip_reason?: string | null;
+          attempts?: number;
+          last_error?: string | null;
         };
         Relationships: [];
       };
@@ -680,6 +926,13 @@ export type Database = {
           new_values?: Record<string, unknown> | null;
           ip_address?: string | null;
           created_at?: string;
+          appointment_id?: string | null;
+          message_type?: MessageType | null;
+          scheduled_for?: string | null;
+          dedupe_key?: string | null;
+          skip_reason?: string | null;
+          attempts?: number;
+          last_error?: string | null;
         };
         Update: {
           id?: string;
@@ -691,6 +944,13 @@ export type Database = {
           new_values?: Record<string, unknown> | null;
           ip_address?: string | null;
           created_at?: string;
+          appointment_id?: string | null;
+          message_type?: MessageType | null;
+          scheduled_for?: string | null;
+          dedupe_key?: string | null;
+          skip_reason?: string | null;
+          attempts?: number;
+          last_error?: string | null;
         };
         Relationships: [];
       };

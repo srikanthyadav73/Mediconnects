@@ -1,4 +1,6 @@
-import type { MessageStatus, MessageCategory } from "./database";
+import type { MessageStatus, MessageCategory, MessageType } from "./database";
+
+export type { MessageType };
 
 export interface MessageTemplateItem {
   id: string;
@@ -9,6 +11,7 @@ export interface MessageTemplateItem {
   headerText?: string;
   bodyText: string;
   footerText?: string;
+  variables?: string[];
   buttons?: Array<{ type: "QUICK_REPLY" | "URL"; text: string; url?: string }>;
 }
 
@@ -21,12 +24,19 @@ export interface MessageLogEntry {
   templateName: string;
   messageBody: string;
   status: MessageStatus;
-  providerMessageId: string;
-  isMock: boolean;
-  sentAt: string;
+  providerMessageId?: string;
+  isMock?: boolean;
+  sentAt?: string;
   deliveredAt?: string;
   readAt?: string;
   errorMessage?: string;
+  appointmentId?: string | null;
+  messageType?: MessageType | null;
+  scheduledFor?: string | null;
+  dedupeKey?: string | null;
+  skipReason?: string | null;
+  attempts?: number;
+  lastError?: string | null;
 }
 
 export const APPROVED_TEMPLATES: MessageTemplateItem[] = [
@@ -103,5 +113,53 @@ export const APPROVED_TEMPLATES: MessageTemplateItem[] = [
       "Join MediConnect this Saturday for our Pediatric Pulmonary & Allergy Camp. Free spirometry and senior pediatrician consultation for children aged 0-14.",
     footerText: "Reply STOP to opt out of promotional messages",
     buttons: [{ type: "QUICK_REPLY", text: "Register Child" }],
+  },
+  {
+    id: "tpl-7",
+    name: "appointment_confirmation",
+    category: "utility",
+    language: "en_US",
+    status: "APPROVED",
+    headerText: "Appointment Confirmed",
+    bodyText:
+      "Dear {{guardian_name}}, the appointment for {{child_first_name}} with {{doctor_name}} has been confirmed for {{date}} at {{time_slot}}. Hospital address: {{hospital_address}}.",
+    footerText: "MediConnect Pediatric Console",
+    variables: ["guardian_name", "child_first_name", "doctor_name", "date", "time_slot", "hospital_address"],
+  },
+  {
+    id: "tpl-8",
+    name: "appointment_reminder",
+    category: "utility",
+    language: "en_US",
+    status: "APPROVED",
+    headerText: "Appointment Reminder",
+    bodyText:
+      "Dear {{guardian_name}}, this is a reminder for {{child_first_name}}'s appointment with {{doctor_name}} on {{date}} at {{time_slot}}. Hospital address: {{hospital_address}}.",
+    footerText: "MediConnect Pediatric Console",
+    variables: ["guardian_name", "child_first_name", "doctor_name", "date", "time_slot", "hospital_address"],
+  },
+  {
+    id: "tpl-9",
+    name: "appointment_cancelled",
+    category: "utility",
+    language: "en_US",
+    status: "APPROVED",
+    headerText: "Appointment Cancelled",
+    bodyText:
+      "Dear {{guardian_name}}, the appointment for {{child_first_name}} with {{doctor_name}} scheduled on {{date}} at {{time_slot}} has been cancelled. Hospital address: {{hospital_address}}.",
+    footerText: "MediConnect Pediatric Console",
+    variables: ["guardian_name", "child_first_name", "doctor_name", "date", "time_slot", "hospital_address"],
+  },
+  {
+    id: "tpl-10",
+    name: "appointment_rescheduled",
+    category: "utility",
+    language: "en_US",
+    status: "APPROVED",
+    headerText: "Appointment Rescheduled",
+    bodyText:
+      "Dear {{guardian_name}}, the appointment for {{child_first_name}} with {{doctor_name}} has been rescheduled to {{date}} at {{time_slot}}. Hospital address: {{hospital_address}}.",
+    footerText: "MediConnect Pediatric Console",
+    variables: ["guardian_name", "child_first_name", "doctor_name", "date", "time_slot", "hospital_address"],
   },
 ];

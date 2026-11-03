@@ -22,7 +22,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -507,17 +507,17 @@ export function MessagesClient({
 
                         <td className="py-3 px-4">
                           <div className="text-foreground">
-                            {new Date(msg.sentAt).toLocaleDateString("en-IN", {
+                            {(msg.sentAt || msg.scheduledFor) ? new Date(msg.sentAt || msg.scheduledFor!).toLocaleDateString("en-IN", {
                               day: "2-digit",
                               month: "short",
                               year: "numeric",
-                            })}
+                            }) : "—"}
                           </div>
                           <div className="text-[10px] text-muted-foreground">
-                            {new Date(msg.sentAt).toLocaleTimeString("en-IN", {
+                            {(msg.sentAt || msg.scheduledFor) ? new Date(msg.sentAt || msg.scheduledFor!).toLocaleTimeString("en-IN", {
                               hour: "2-digit",
                               minute: "2-digit",
-                            })}
+                            }) : "—"}
                           </div>
                         </td>
 

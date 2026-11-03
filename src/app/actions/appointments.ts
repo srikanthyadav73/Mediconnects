@@ -9,6 +9,15 @@ import {
 import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/env";
 import { getCurrentUser } from "@/lib/auth";
+import {
+  sendAppointmentImmediateMessage,
+  queueAppointmentReminders,
+} from "@/lib/appointment-reminders";
+import {
+  getMessagesForAppointment,
+  cancelPendingReminders,
+  retryMessage,
+} from "@/lib/messages-store";
 
 export interface AppointmentRecord {
   id: string;
@@ -366,9 +375,26 @@ export async function approveAppointmentAction(appointmentId: string) {
     }
   }
 
+  const confirmedApt = apt || target;
+
+  // Send immediate confirmation and queue reminders (WhatsApp failure must never block approval)
+  try {
+    await sendAppointmentImmediateMessage({
+      appointment: confirmedApt,
+      messageType: "appointment_confirmation",
+    });
+
+    await queueAppointmentReminders({
+      appointment: confirmedApt,
+      approvalTimeUtc: new Date(),
+    });
+  } catch (msgErr) {
+    console.error("Non-blocking error dispatching appointment messages:", msgErr);
+  }
+
   revalidatePath("/appointments");
   revalidatePath("/dashboard");
-  return { success: true, appointment: apt || target };
+  return { success: true, appointment: confirmedApt };
 }
 
 export async function updateAppointmentStatusAction(
@@ -390,6 +416,23 @@ export async function updateAppointmentStatusAction(
     } catch {
       // ignore
     }
+  }
+
+  // Cancel pending reminders if cancelled, completed or no-show
+  try {
+    if (newStatus === "cancelled") {
+      await cancelPendingReminders(appointmentId);
+      if (apt) {
+        await sendAppointmentImmediateMessage({
+          appointment: apt,
+          messageType: "appointment_cancelled",
+        });
+      }
+    } else if (newStatus === "completed" || newStatus === "no_show") {
+      await cancelPendingReminders(appointmentId);
+    }
+  } catch (msgErr) {
+    console.error("Non-blocking error handling appointment status update messages:", msgErr);
   }
 
   revalidatePath("/appointments");
@@ -458,7 +501,36 @@ export async function rescheduleAppointmentAction(
     }
   }
 
+  // Cancel old reminders, dispatch appointment_rescheduled and queue new reminders
+  try {
+    await cancelPendingReminders(appointmentId);
+    const updatedApt = apt || existing.find((a) => a.id === appointmentId);
+    if (updatedApt) {
+      await sendAppointmentImmediateMessage({
+        appointment: updatedApt,
+        messageType: "appointment_rescheduled",
+      });
+      await queueAppointmentReminders({
+        appointment: updatedApt,
+        approvalTimeUtc: new Date(),
+      });
+    }
+  } catch (msgErr) {
+    console.error("Non-blocking error handling appointment reschedule messages:", msgErr);
+  }
+
   revalidatePath("/appointments");
   revalidatePath("/dashboard");
   return { success: true };
+}
+
+export async function getAppointmentMessagesAction(appointmentId: string) {
+  return await getMessagesForAppointment(appointmentId);
+}
+
+export async function retryAppointmentMessageAction(messageId: string) {
+  const res = await retryMessage(messageId);
+  revalidatePath("/appointments");
+  revalidatePath("/messages");
+  return res;
 }
