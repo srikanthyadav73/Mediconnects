@@ -10,7 +10,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "CareBridge | Children's Hospital CRM & WhatsApp Engagement",
+  title: "MediConnect | Children's Hospital CRM & WhatsApp Engagement",
   description:
     "Integrated WhatsApp CRM, appointments, billing, and patient analytics for pediatric and general hospitals.",
 };

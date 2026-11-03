@@ -4,7 +4,7 @@ import { isWhatsAppMock } from "@/lib/env";
 import { MessagesClient } from "./messages-client";
 
 export const metadata = {
-  title: "WhatsApp Messaging Center | CareBridge Children's Hospital",
+  title: "WhatsApp Messaging Center | MediConnect Children's Hospital",
 };
 
 export default async function MessagesPage() {

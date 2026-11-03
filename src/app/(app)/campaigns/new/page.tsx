@@ -4,7 +4,7 @@ import type { AudienceCandidate } from "@/lib/campaign-audience";
 import { WizardClient } from "./wizard-client";
 
 export const metadata = {
-  title: "New Campaign Wizard | CareBridge Children's Hospital",
+  title: "New Campaign Wizard | MediConnect Children's Hospital",
 };
 
 export default async function NewCampaignPage() {

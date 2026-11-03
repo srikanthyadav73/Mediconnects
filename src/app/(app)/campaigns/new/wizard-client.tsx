@@ -274,7 +274,7 @@ export function WizardClient({ candidates }: WizardClientProps) {
               </div>
               <div className="p-3 bg-white rounded-lg border border-border shadow-2xs text-zinc-900">
                 <div className="font-bold text-teal-800 text-xs mb-1">
-                  {selectedTemplate.headerText || "CareBridge Children's Hospital"}
+                  {selectedTemplate.headerText || "MediConnect Children's Hospital"}
                 </div>
                 <div className="text-xs text-zinc-700 leading-relaxed">
                   {selectedTemplate.bodyText}

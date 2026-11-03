@@ -208,20 +208,56 @@ export function SettingsClient({
       l.ipAddress,
       l.details,
     ]);
-    downloadCSV("CareBridge_Audit_Compliance_Log", headers, rows);
+    downloadCSV("MediConnect_Audit_Compliance_Log", headers, rows);
   };
 
   return (
     <div className="space-y-6">
-      {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-border">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
-            Hospital Settings &amp; Administration
-          </h1>
-          <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
+      {/* 1. TOP WELCOME BANNER MATCHING TARGET DESIGN */}
+      <div className="relative overflow-hidden rounded-2xl border border-sky-100 bg-gradient-to-r from-[#e0f2fe]/95 via-[#e2f8f5]/85 to-[#edf9f0]/75 p-6 sm:p-7 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-6">
+        {/* Left: Heading & Subtitle */}
+        <div className="relative z-10 max-w-md">
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">
+              Hospital Settings &amp; Administration
+            </h1>
+            <span className="bg-[#cbf1ea] text-[#0d6e64] text-xs font-semibold px-3 py-0.5 rounded-full whitespace-nowrap">
+              Admin Console
+            </span>
+          </div>
+          <p className="text-xs sm:text-sm text-slate-600 font-medium mt-1.5 leading-relaxed">
             Hospital master profile, service tariffs, role-based access control, and compliance audit trail.
           </p>
+        </div>
+
+        {/* Center: Pediatric Mascot & Slogan */}
+        <div className="hidden lg:flex items-center gap-4 relative z-10">
+          <div className="relative h-18 w-22 shrink-0 overflow-hidden rounded-2xl bg-white/70 shadow-xs border border-white">
+            <img
+              src="/images/child-teddy-banner.jpg"
+              alt="Care Mascot with Teddy Bear"
+              className="h-full w-full object-cover object-center"
+            />
+          </div>
+          <div className="text-left select-none">
+            <span className="text-sm font-extrabold text-[#00695c] tracking-tight block leading-tight">
+              Hospital Security
+            </span>
+            <span className="text-sm font-extrabold text-[#00695c] tracking-tight flex items-center gap-1 leading-tight">
+              Clinical Governance <span className="text-orange-500 font-normal">🛡️</span>
+            </span>
+          </div>
+        </div>
+
+        {/* Right: CTA Action */}
+        <div className="relative z-10 flex items-center gap-3">
+          <button
+            onClick={() => setNewStaffOpen(true)}
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#00796b] hover:bg-[#00695c] text-white font-bold text-xs shadow-md shadow-teal-800/15 transition-all hover:scale-[1.02] active:scale-[0.98]"
+          >
+            <Plus className="w-4 h-4 stroke-[2.5]" />
+            <span>Add Staff User</span>
+          </button>
         </div>
       </div>
 
@@ -802,7 +838,7 @@ export function SettingsClient({
               <label className="text-xs font-semibold text-foreground">Hospital Email</label>
               <Input
                 type="email"
-                placeholder="e.g. priya.nair@carebridge.in"
+                placeholder="e.g. priya.nair@mediconnect.in"
                 value={newStaffEmail}
                 onChange={(e) => setNewStaffEmail(e.target.value)}
                 required
@@ -834,6 +870,12 @@ export function SettingsClient({
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* 5. BOTTOM CONFIDENTIALITY BANNER */}
+      <div className="p-3 bg-[#e8f7f4] border border-[#b2e2d8] rounded-xl flex items-center gap-2.5 text-xs text-[#0f6055] font-medium">
+        <Lock className="w-4 h-4 text-[#0f766e] shrink-0" />
+        <span>Administrative settings and credential logs are recorded in the immutable compliance audit trail.</span>
+      </div>
     </div>
   );
 }

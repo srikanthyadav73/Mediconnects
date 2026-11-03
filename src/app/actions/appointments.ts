@@ -8,6 +8,7 @@ import {
 } from "@/lib/appointment-conflict";
 import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/env";
+import { getCurrentUser } from "@/lib/auth";
 
 export interface AppointmentRecord {
   id: string;
@@ -283,6 +284,91 @@ export async function bookAppointmentAction(data: z.infer<typeof bookSchema>) {
   revalidatePath("/appointments");
   revalidatePath("/dashboard");
   return { success: true, appointment: newAppointment };
+}
+
+export async function approveAppointmentAction(appointmentId: string) {
+  const user = await getCurrentUser();
+  if (!user) {
+    return { success: false, error: "Authentication required to approve appointments." };
+  }
+
+  const existing = await fetchAllAppointments();
+  const target = existing.find((a) => a.id === appointmentId);
+  if (!target) {
+    return { success: false, error: "Appointment record not found." };
+  }
+
+  // Idempotent: pressing Approve twice changes nothing the second time
+  if (target.status === "confirmed") {
+    return { success: true, alreadyConfirmed: true, appointment: target };
+  }
+
+  // Only assigned doctor and admin can approve
+  const isAssignedDoctor =
+    user.role === "doctor" &&
+    (user.fullName.toLowerCase().includes(target.doctorName.toLowerCase()) ||
+      target.doctorName.toLowerCase().includes(user.fullName.toLowerCase()) ||
+      user.id === target.doctorId);
+  const isAdmin = user.role === "admin";
+
+  if (!isAssignedDoctor && !isAdmin) {
+    return {
+      success: false,
+      error: `Permission Denied: Only ${target.doctorName} or a Hospital Administrator can approve this appointment.`,
+    };
+  }
+
+  // Check conflict against existing confirmed slots
+  const existingSlots: ExistingAppointmentSlot[] = existing.map((a) => ({
+    id: a.id,
+    doctorId: a.doctorId,
+    doctorName: a.doctorName,
+    appointmentDate: a.appointmentDate,
+    startTime: a.startTime,
+    endTime: a.endTime,
+    status: a.status,
+  }));
+
+  const conflict = checkSlotConflict(
+    {
+      appointmentIdToExclude: appointmentId,
+      doctorId: target.doctorId,
+      appointmentDate: target.appointmentDate,
+      startTime: target.startTime,
+      endTime: target.endTime,
+    },
+    existingSlots
+  );
+
+  if (conflict.hasConflict) {
+    return {
+      success: false,
+      error: `Conflict: ${target.doctorName} already has another active booking during ${target.startTime} - ${target.endTime} on ${target.appointmentDate}.`,
+    };
+  }
+
+  // Update in-memory
+  const apt = inMemoryAppointments.find((a) => a.id === appointmentId);
+  if (apt) {
+    apt.status = "confirmed";
+  }
+
+  // Update Supabase if configured
+  if (isSupabaseConfigured) {
+    try {
+      const supabase = await createClient();
+      await supabase
+        .from("appointments")
+        .update({ status: "confirmed" })
+        .eq("id", appointmentId);
+    } catch (err) {
+      console.error("Error confirming appointment in Supabase:", err);
+    }
+  }
+
+  revalidatePath("/appointments");
+  revalidatePath("/dashboard");
+  return { success: true, appointment: apt || target };
 }
 
 export async function updateAppointmentStatusAction(

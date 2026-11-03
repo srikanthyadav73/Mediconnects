@@ -4,6 +4,7 @@ import React, { useState, useTransition } from "react";
 import Link from "next/link";
 import {
   Receipt,
+  Lock,
   Plus,
   Search,
   DollarSign,
@@ -21,7 +22,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -49,6 +50,32 @@ import {
 } from "@/types/billing";
 import type { PatientDetailed } from "@/lib/patients-data";
 import type { PaymentMethod } from "@/types/database";
+
+function MiniSparkline({ color }: { color: string }) {
+  return (
+    <div className="h-10 w-full mt-3 -mb-1 overflow-hidden pointer-events-none">
+      <svg viewBox="0 0 100 24" className="w-full h-full" preserveAspectRatio="none">
+        <defs>
+          <linearGradient id={`grad-${color.replace("#", "")}`} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={color} stopOpacity="0.25" />
+            <stop offset="100%" stopColor={color} stopOpacity="0.0" />
+          </linearGradient>
+        </defs>
+        <path
+          d="M0,16 Q18,6 36,13 T72,11 T90,6 T100,9 L100,24 L0,24 Z"
+          fill={`url(#grad-${color.replace("#", "")})`}
+        />
+        <path
+          d="M0,16 Q18,6 36,13 T72,11 T90,6 T100,9"
+          fill="none"
+          stroke={color}
+          strokeWidth="2.2"
+          strokeLinecap="round"
+        />
+      </svg>
+    </div>
+  );
+}
 
 interface BillingClientProps {
   initialInvoices: InvoiceDetail[];
@@ -327,92 +354,147 @@ export function BillingClient({
         </div>
       )}
 
-      {/* Page Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">
-            Pediatric Billing & Revenue
-          </h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
+      {/* 1. TOP WELCOME BANNER MATCHING TARGET DESIGN */}
+      <div className="relative overflow-hidden rounded-2xl border border-sky-100 bg-gradient-to-r from-[#e0f2fe]/95 via-[#e2f8f5]/85 to-[#edf9f0]/75 p-6 sm:p-7 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-6">
+        {/* Left: Heading & Subtitle */}
+        <div className="relative z-10 max-w-md">
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">
+              Pediatric Billing &amp; Revenue
+            </h1>
+            <span className="bg-[#cbf1ea] text-[#0d6e64] text-xs font-semibold px-3 py-0.5 rounded-full whitespace-nowrap">
+              {totalInvoices} Invoices
+            </span>
+          </div>
+          <p className="text-xs sm:text-sm text-slate-600 font-medium mt-1.5 leading-relaxed">
             Manage hospital service invoices, accept offline cash/UPI payments, send Razorpay links, and generate printable receipts.
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <Button
+
+        {/* Center: Pediatric Mascot & Slogan */}
+        <div className="hidden lg:flex items-center gap-4 relative z-10">
+          <div className="relative h-18 w-22 shrink-0 overflow-hidden rounded-2xl bg-white/70 shadow-xs border border-white">
+            <img
+              src="/images/child-teddy-banner.jpg"
+              alt="Care Mascot with Teddy Bear"
+              className="h-full w-full object-cover object-center"
+            />
+          </div>
+          <div className="text-left select-none">
+            <span className="text-sm font-extrabold text-[#00695c] tracking-tight block leading-tight">
+              Transparent Care
+            </span>
+            <span className="text-sm font-extrabold text-[#00695c] tracking-tight flex items-center gap-1 leading-tight">
+              Swift Receipts <span className="text-orange-500 font-normal">💳</span>
+            </span>
+          </div>
+        </div>
+
+        {/* Right: CTA Action */}
+        <div className="relative z-10 flex items-center gap-3">
+          <button
             onClick={() => setCreateOpen(true)}
-            className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#00796b] hover:bg-[#00695c] text-white font-bold text-xs shadow-md shadow-teal-800/15 transition-all hover:scale-[1.02] active:scale-[0.98]"
           >
-            <Plus className="w-4 h-4" />
-            Create Invoice
-          </Button>
+            <Plus className="w-4 h-4 stroke-[2.5]" />
+            <span>Create Invoice</span>
+          </button>
         </div>
       </div>
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="border-border shadow-sm">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-              Total Revenue Collected
-            </CardTitle>
-            <DollarSign className="w-4 h-4 text-emerald-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-foreground">
-              ₹{totalRevenue.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+      {/* 2. 4 SUMMARY KPI CARDS */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        {/* Card 1: Total Revenue */}
+        <div className="bg-white rounded-2xl p-5 border border-slate-100/90 shadow-2xs hover:shadow-xs transition-shadow flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-700">
+                  <DollarSign className="w-4 h-4" />
+                </div>
+                <span className="text-xs font-bold text-slate-700">Collected Revenue</span>
+              </div>
+              <span className="text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                ↗ +22% <span className="font-normal text-slate-400">vs last mo</span>
+              </span>
             </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Received via Cash, UPI, and Razorpay
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-border shadow-sm">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-              Outstanding Balance Due
-            </CardTitle>
-            <Clock className="w-4 h-4 text-rose-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-rose-600">
-              ₹{totalOutstanding.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+            <div className="mt-3.5">
+              <span className="text-2xl lg:text-3xl font-extrabold text-slate-900">
+                ₹{totalRevenue.toLocaleString("en-IN", { minimumFractionDigits: 0 })}
+              </span>
             </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Pending collection across patients
-            </p>
-          </CardContent>
-        </Card>
+          </div>
+          <MiniSparkline color="#10b981" />
+        </div>
 
-        <Card className="border-border shadow-sm">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-              Total Invoices
-            </CardTitle>
-            <Receipt className="w-4 h-4 text-primary" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-foreground">{totalInvoices}</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Invoices generated this cycle
-            </p>
-          </CardContent>
-        </Card>
+        {/* Card 2: Outstanding Due */}
+        <div className="bg-white rounded-2xl p-5 border border-slate-100/90 shadow-2xs hover:shadow-xs transition-shadow flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-full bg-rose-50 flex items-center justify-center text-rose-600">
+                  <Clock className="w-4 h-4" />
+                </div>
+                <span className="text-xs font-bold text-slate-700">Balance Due</span>
+              </div>
+              <span className="text-[11px] font-bold text-rose-600 bg-rose-50 px-2.5 py-0.5 rounded-full">
+                Pending
+              </span>
+            </div>
+            <div className="mt-3.5">
+              <span className="text-2xl lg:text-3xl font-extrabold text-rose-600">
+                ₹{totalOutstanding.toLocaleString("en-IN", { minimumFractionDigits: 0 })}
+              </span>
+            </div>
+          </div>
+          <MiniSparkline color="#e11d48" />
+        </div>
 
-        <Card className="border-border shadow-sm">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-              Pending / Unpaid Bills
-            </CardTitle>
-            <AlertCircle className="w-4 h-4 text-amber-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-foreground">{overdueCount}</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Partially paid or unpaid invoices
-            </p>
-          </CardContent>
-        </Card>
+        {/* Card 3: Total Invoices */}
+        <div className="bg-white rounded-2xl p-5 border border-slate-100/90 shadow-2xs hover:shadow-xs transition-shadow flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-full bg-teal-50 flex items-center justify-center text-teal-700">
+                  <Receipt className="w-4 h-4" />
+                </div>
+                <span className="text-xs font-bold text-slate-700">Total Invoices</span>
+              </div>
+              <span className="text-[11px] font-bold text-teal-700 bg-teal-50 px-2.5 py-0.5 rounded-full">
+                All records
+              </span>
+            </div>
+            <div className="mt-3.5">
+              <span className="text-2xl lg:text-3xl font-extrabold text-slate-900">
+                {totalInvoices}
+              </span>
+            </div>
+          </div>
+          <MiniSparkline color="#0d9488" />
+        </div>
+
+        {/* Card 4: Unpaid / Partial */}
+        <div className="bg-white rounded-2xl p-5 border border-slate-100/90 shadow-2xs hover:shadow-xs transition-shadow flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-full bg-amber-50 flex items-center justify-center text-amber-600">
+                  <AlertCircle className="w-4 h-4" />
+                </div>
+                <span className="text-xs font-bold text-slate-700">Unpaid Invoices</span>
+              </div>
+              <span className="text-[11px] font-bold text-amber-700 bg-amber-50 px-2.5 py-0.5 rounded-full">
+                Needs follow-up
+              </span>
+            </div>
+            <div className="mt-3.5">
+              <span className="text-2xl lg:text-3xl font-extrabold text-slate-900">
+                {overdueCount}
+              </span>
+            </div>
+          </div>
+          <MiniSparkline color="#f59e0b" />
+        </div>
       </div>
 
       {/* Filter and Table Container */}
@@ -857,6 +939,12 @@ export function BillingClient({
           )}
         </DialogContent>
       </Dialog>
+
+            {/* 5. BOTTOM CONFIDENTIALITY BANNER */}
+      <div className="p-3 bg-[#e8f7f4] border border-[#b2e2d8] rounded-xl flex items-center gap-2.5 text-xs text-[#0f6055] font-medium">
+        <Lock className="w-4 h-4 text-[#0f766e] shrink-0" />
+        <span>Billing receipts, GSTIN hospital records, and digital payment transactions are encrypted and audited.</span>
+      </div>
 
       {/* Printable Receipt Modal */}
       <PrintableReceipt

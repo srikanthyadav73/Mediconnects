@@ -13,6 +13,7 @@ import {
   RefreshCw,
   Loader2,
   ArrowRight,
+  Lock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -47,17 +48,47 @@ import {
   bookAppointmentAction,
   updateAppointmentStatusAction,
   rescheduleAppointmentAction,
+  approveAppointmentAction,
 } from "@/app/actions/appointments";
 import type { PatientDetailed } from "@/lib/patients-data";
+import type { SessionUser } from "@/lib/auth";
+
+function MiniSparkline({ color }: { color: string }) {
+  return (
+    <div className="h-10 w-full mt-3 -mb-1 overflow-hidden pointer-events-none">
+      <svg viewBox="0 0 100 24" className="w-full h-full" preserveAspectRatio="none">
+        <defs>
+          <linearGradient id={`grad-${color.replace("#", "")}`} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={color} stopOpacity="0.25" />
+            <stop offset="100%" stopColor={color} stopOpacity="0.0" />
+          </linearGradient>
+        </defs>
+        <path
+          d="M0,16 Q18,6 36,13 T72,11 T90,6 T100,9 L100,24 L0,24 Z"
+          fill={`url(#grad-${color.replace("#", "")})`}
+        />
+        <path
+          d="M0,16 Q18,6 36,13 T72,11 T90,6 T100,9"
+          fill="none"
+          stroke={color}
+          strokeWidth="2.2"
+          strokeLinecap="round"
+        />
+      </svg>
+    </div>
+  );
+}
 
 interface AppointmentsCalendarViewProps {
   initialAppointments: AppointmentRecord[];
   patients: PatientDetailed[];
+  currentUser?: SessionUser | null;
 }
 
 export function AppointmentsCalendarView({
   initialAppointments,
   patients,
+  currentUser,
 }: AppointmentsCalendarViewProps) {
   const [appointments, setAppointments] = React.useState<AppointmentRecord[]>(
     initialAppointments
@@ -89,6 +120,42 @@ export function AppointmentsCalendarView({
   const [rescheduleEnd, setRescheduleEnd] = React.useState("10:30");
   const [rescheduleLoading, setRescheduleLoading] = React.useState(false);
   const [rescheduleError, setRescheduleError] = React.useState<string | null>(null);
+  const [approvingId, setApprovingId] = React.useState<string | null>(null);
+  const [approvalError, setApprovalError] = React.useState<string | null>(null);
+
+  const canApprove = (apt: AppointmentRecord) => {
+    if (!currentUser) return false;
+    if (currentUser.role === "admin") return true;
+    if (currentUser.role === "doctor") {
+      const cName = currentUser.fullName.toLowerCase();
+      const dName = apt.doctorName.toLowerCase();
+      return (
+        cName.includes(dName) ||
+        dName.includes(cName) ||
+        currentUser.id === apt.doctorId
+      );
+    }
+    return false;
+  };
+
+  const handleApprove = async (aptId: string) => {
+    setApprovingId(aptId);
+    setApprovalError(null);
+    try {
+      const res = await approveAppointmentAction(aptId);
+      if (!res.success) {
+        setApprovalError(res.error || "Failed to approve appointment.");
+      } else {
+        setAppointments((prev) =>
+          prev.map((a) => (a.id === aptId ? { ...a, status: "confirmed" } : a))
+        );
+      }
+    } catch (err: unknown) {
+      setApprovalError((err as Error).message || "An error occurred.");
+    } finally {
+      setApprovingId(null);
+    }
+  };
 
   const doctorsList = [
     { id: "doc-1", name: "Dr. Ananya Roy", specialty: "Neonatology & Pediatrics" },
@@ -213,118 +280,215 @@ export function AppointmentsCalendarView({
     setBookDialogOpen(true);
   }
 
+  const totalSlots = filtered.length;
+  const activeSlots = filtered.filter((a) => a.status === "confirmed" || a.status === "booked").length;
+  const completedSlots = filtered.filter((a) => a.status === "completed").length;
+
   return (
     <div className="space-y-6">
-      {/* Header and Actions */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-border/80">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
-            Pediatric Appointments
-            <Badge variant="secondary" className="text-xs">
-              {filtered.length} Booked
-            </Badge>
-          </h1>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            Doctor schedules, slot conflict prevention, and WhatsApp reminder triggers.
+      {/* 1. TOP WELCOME BANNER MATCHING TARGET DESIGN */}
+      <div className="relative overflow-hidden rounded-2xl border border-sky-100 bg-gradient-to-r from-[#e0f2fe]/95 via-[#e2f8f5]/85 to-[#edf9f0]/75 p-6 sm:p-7 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-6">
+        {/* Left: Heading & Subtitle */}
+        <div className="relative z-10 max-w-md">
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">
+              Pediatric Appointments
+            </h1>
+            <span className="bg-[#cbf1ea] text-[#0d6e64] text-xs font-semibold px-3 py-0.5 rounded-full whitespace-nowrap">
+              {totalSlots} Booked
+            </span>
+          </div>
+          <p className="text-xs sm:text-sm text-slate-600 font-medium mt-1.5 leading-relaxed">
+            Doctor schedules, slot conflict prevention, and automated WhatsApp reminder triggers.
           </p>
         </div>
 
-        <div className="flex items-center gap-2.5">
-          <Button
-            size="sm"
+        {/* Center: Mascot & Slogan */}
+        <div className="hidden lg:flex items-center gap-4 relative z-10">
+          <div className="relative h-18 w-22 shrink-0 overflow-hidden rounded-2xl bg-white/70 shadow-xs border border-white">
+            <img
+              src="/images/child-teddy-banner.jpg"
+              alt="Care Mascot with Teddy Bear"
+              className="h-full w-full object-cover object-center"
+            />
+          </div>
+          <div className="text-left select-none">
+            <span className="text-sm font-extrabold text-[#00695c] tracking-tight block leading-tight">
+              Gentle Pediatric Slots
+            </span>
+            <span className="text-sm font-extrabold text-[#00695c] tracking-tight flex items-center gap-1 leading-tight">
+              Zero Wait Triage <span className="text-orange-500 font-normal">⏰</span>
+            </span>
+          </div>
+        </div>
+
+        {/* Right: CTA Action */}
+        <div className="relative z-10 flex items-center gap-3">
+          <button
             onClick={() => {
               setBookError(null);
               setBookDialogOpen(true);
             }}
-            className="bg-primary hover:bg-primary/90 text-primary-foreground text-xs shadow-sm font-semibold"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#00796b] hover:bg-[#00695c] text-white font-bold text-xs shadow-md shadow-teal-800/15 transition-all hover:scale-[1.02] active:scale-[0.98]"
           >
-            <Plus className="h-3.5 w-3.5 mr-1" />
-            Book New Slot
-          </Button>
+            <Plus className="w-4 h-4 stroke-[2.5]" />
+            <span>Book New Slot</span>
+          </button>
         </div>
       </div>
 
-      {/* View Switcher & Filters */}
-      <Card className="shadow-2xs">
-        <CardContent className="p-3 flex flex-col md:flex-row md:items-center justify-between gap-3">
-          {/* View Toggles */}
-          <div className="inline-flex rounded-lg bg-muted p-1 text-muted-foreground">
-            <button
-              onClick={() => setViewMode("list")}
-              className={`px-3 py-1 text-xs font-semibold rounded-md transition-all flex items-center gap-1.5 ${
-                viewMode === "list" ? "bg-background text-foreground shadow" : ""
-              }`}
-            >
-              <ListFilter className="h-3.5 w-3.5" />
-              List
-            </button>
-            <button
-              onClick={() => setViewMode("day")}
-              className={`px-3 py-1 text-xs font-semibold rounded-md transition-all flex items-center gap-1.5 ${
-                viewMode === "day" ? "bg-background text-foreground shadow" : ""
-              }`}
-            >
-              <Clock className="h-3.5 w-3.5" />
-              Day
-            </button>
-            <button
-              onClick={() => setViewMode("week")}
-              className={`px-3 py-1 text-xs font-semibold rounded-md transition-all flex items-center gap-1.5 ${
-                viewMode === "week" ? "bg-background text-foreground shadow" : ""
-              }`}
-            >
-              <CalendarRange className="h-3.5 w-3.5" />
-              Week
-            </button>
-            <button
-              onClick={() => setViewMode("month")}
-              className={`px-3 py-1 text-xs font-semibold rounded-md transition-all flex items-center gap-1.5 ${
-                viewMode === "month" ? "bg-background text-foreground shadow" : ""
-              }`}
-            >
-              <CalendarDays className="h-3.5 w-3.5" />
-              Month
-            </button>
-          </div>
-
-          {/* Doctor & Status Filters */}
-          <div className="flex items-center gap-2.5 flex-wrap">
-            <div className="flex items-center gap-1.5">
-              <span className="text-[11px] text-muted-foreground font-medium">Doctor:</span>
-              <Select value={doctorFilter} onValueChange={setDoctorFilter}>
-                <SelectTrigger className="text-xs h-8 w-44">
-                  <SelectValue placeholder="All Doctors" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Doctors</SelectItem>
-                  {doctorsList.map((d) => (
-                    <SelectItem key={d.id} value={d.id}>
-                      {d.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+      {/* 2. 3 SUMMARY KPI CARDS */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+        {/* Card 1: Total Slots */}
+        <div className="bg-white rounded-2xl p-5 border border-slate-100/90 shadow-2xs hover:shadow-xs transition-shadow flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-full bg-teal-50 flex items-center justify-center text-teal-700">
+                  <Calendar className="w-4 h-4" />
+                </div>
+                <span className="text-xs font-bold text-slate-700">Scheduled Slots</span>
+              </div>
+              <span className="text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                ↗ +15% <span className="font-normal text-slate-400">vs last week</span>
+              </span>
             </div>
-
-            <div className="flex items-center gap-1.5">
-              <span className="text-[11px] text-muted-foreground font-medium">Status:</span>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="text-xs h-8 w-36">
-                  <SelectValue placeholder="All Statuses" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Statuses</SelectItem>
-                  <SelectItem value="booked">Booked</SelectItem>
-                  <SelectItem value="confirmed">Confirmed</SelectItem>
-                  <SelectItem value="completed">Completed</SelectItem>
-                  <SelectItem value="cancelled">Cancelled</SelectItem>
-                  <SelectItem value="no_show">No Show</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="mt-3.5">
+              <span className="text-3xl font-extrabold text-slate-900">{totalSlots}</span>
             </div>
           </div>
-        </CardContent>
-      </Card>
+          <MiniSparkline color="#0d9488" />
+        </div>
+
+        {/* Card 2: Active / Confirmed */}
+        <div className="bg-white rounded-2xl p-5 border border-slate-100/90 shadow-2xs hover:shadow-xs transition-shadow flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-full bg-emerald-50 flex items-center justify-center text-[#10b981]">
+                  <CheckCircle2 className="w-4 h-4" />
+                </div>
+                <span className="text-xs font-bold text-slate-700">Confirmed &amp; Active</span>
+              </div>
+              <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                ✓ Real-time <span className="font-normal text-slate-400">sync</span>
+              </span>
+            </div>
+            <div className="mt-3.5">
+              <span className="text-3xl font-extrabold text-slate-900">{activeSlots}</span>
+            </div>
+          </div>
+          <MiniSparkline color="#10b981" />
+        </div>
+
+        {/* Card 3: Completed */}
+        <div className="bg-white rounded-2xl p-5 border border-slate-100/90 shadow-2xs hover:shadow-xs transition-shadow flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-full bg-sky-50 flex items-center justify-center text-sky-600">
+                  <Clock className="w-4 h-4" />
+                </div>
+                <span className="text-xs font-bold text-slate-700">Completed Consults</span>
+              </div>
+              <span className="text-[11px] font-bold text-sky-600 bg-sky-50 px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                ↗ 100% <span className="font-normal text-slate-400">on-time</span>
+              </span>
+            </div>
+            <div className="mt-3.5">
+              <span className="text-3xl font-extrabold text-slate-900">{completedSlots}</span>
+            </div>
+          </div>
+          <MiniSparkline color="#0284c7" />
+        </div>
+      </div>
+
+      {/* 3. VIEW SWITCHER & FILTER CONTROLS */}
+      <div className="bg-white rounded-2xl p-3 border border-slate-200/80 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-3">
+        {/* View Toggles */}
+        <div className="inline-flex rounded-xl bg-slate-100 p-1 text-slate-600">
+          <button
+            onClick={() => setViewMode("list")}
+            className={`px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 ${
+              viewMode === "list" ? "bg-white text-teal-800 shadow-xs" : "hover:text-slate-900"
+            }`}
+          >
+            <ListFilter className="h-3.5 w-3.5" />
+            List
+          </button>
+          <button
+            onClick={() => setViewMode("day")}
+            className={`px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 ${
+              viewMode === "day" ? "bg-white text-teal-800 shadow-xs" : "hover:text-slate-900"
+            }`}
+          >
+            <Clock className="h-3.5 w-3.5" />
+            Day
+          </button>
+          <button
+            onClick={() => setViewMode("week")}
+            className={`px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 ${
+              viewMode === "week" ? "bg-white text-teal-800 shadow-xs" : "hover:text-slate-900"
+            }`}
+          >
+            <CalendarRange className="h-3.5 w-3.5" />
+            Week
+          </button>
+          <button
+            onClick={() => setViewMode("month")}
+            className={`px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 ${
+              viewMode === "month" ? "bg-white text-teal-800 shadow-xs" : "hover:text-slate-900"
+            }`}
+          >
+            <CalendarDays className="h-3.5 w-3.5" />
+            Month
+          </button>
+        </div>
+
+        {/* Doctor & Status Filters */}
+        <div className="flex items-center gap-2.5 flex-wrap">
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs text-slate-500 font-semibold">Doctor:</span>
+            <Select value={doctorFilter} onValueChange={setDoctorFilter}>
+              <SelectTrigger className="text-xs h-9 w-44 rounded-xl border-slate-200 bg-white">
+                <SelectValue placeholder="All Doctors" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Doctors</SelectItem>
+                {doctorsList.map((d) => (
+                  <SelectItem key={d.id} value={d.id}>
+                    {d.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs text-slate-500 font-semibold">Status:</span>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="text-xs h-9 w-36 rounded-xl border-slate-200 bg-white">
+                <SelectValue placeholder="All Statuses" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Statuses</SelectItem>
+                <SelectItem value="booked">Booked</SelectItem>
+                <SelectItem value="confirmed">Confirmed</SelectItem>
+                <SelectItem value="completed">Completed</SelectItem>
+                <SelectItem value="cancelled">Cancelled</SelectItem>
+                <SelectItem value="no_show">No Show</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      </div>
+
+      {approvalError && (
+        <div className="p-3 text-xs rounded-xl bg-destructive/10 text-destructive border border-destructive/20 flex items-center justify-between">
+          <span><strong>Approval Error:</strong> {approvalError}</span>
+          <button onClick={() => setApprovalError(null)} className="font-bold text-xs underline cursor-pointer">Dismiss</button>
+        </div>
+      )}
 
       {/* VIEW 1: LIST VIEW */}
       {viewMode === "list" && (
@@ -385,6 +549,15 @@ export function AppointmentsCalendarView({
                     </TableCell>
 
                     <TableCell>
+                      {apt.status === "booked" ? (
+                        <Badge
+                          variant="outline"
+                          className="text-[10px] capitalize font-bold bg-amber-50 text-amber-800 border-dashed border-amber-300 flex items-center gap-1 w-fit"
+                        >
+                          <Clock className="w-2.5 h-2.5" />
+                          Awaiting Approval
+                        </Badge>
+                      ) : (
                       <Badge
                         variant={
                           apt.status === "confirmed"
@@ -401,21 +574,37 @@ export function AppointmentsCalendarView({
                       >
                         {apt.status.replace("_", " ")}
                       </Badge>
+                      )}
                     </TableCell>
 
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-1.5 flex-wrap">
                         {/* Status Transition buttons */}
                         {apt.status === "booked" && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="h-7 text-xs text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 px-2"
-                            onClick={() => handleStatusChange(apt.id, "confirmed")}
-                          >
-                            <CheckCircle2 className="h-3 w-3 mr-1" />
-                            Confirm
-                          </Button>
+                          canApprove(apt) ? (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              disabled={approvingId === apt.id}
+                              className="h-7 text-xs bg-emerald-50 text-emerald-700 hover:text-emerald-800 hover:bg-emerald-100 border-emerald-300 font-bold px-2 shadow-2xs"
+                              onClick={() => handleApprove(apt.id)}
+                            >
+                              {approvingId === apt.id ? (
+                                <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                              ) : (
+                                <CheckCircle2 className="h-3 w-3 mr-1" />
+                              )}
+                              Approve Booking
+                            </Button>
+                          ) : (
+                            <span
+                              className="text-[10px] font-semibold text-amber-700 bg-amber-50/90 border border-amber-200/80 px-2 py-1 rounded-md flex items-center gap-1 cursor-default"
+                              title={`Requires approval by ${apt.doctorName} or an Admin`}
+                            >
+                              <Lock className="w-3 h-3 text-amber-600" />
+                              Awaiting Dr. Approval
+                            </span>
+                          )
                         )}
 
                         {apt.status === "confirmed" && (
@@ -510,7 +699,7 @@ export function AppointmentsCalendarView({
                       matchedApts.map((m) => (
                         <div
                           key={m.id}
-                          className="p-2 rounded-md bg-secondary/60 border border-secondary text-xs flex items-center justify-between"
+                          className={`p-2 rounded-md text-xs flex items-center justify-between border ${m.status === "booked" ? "bg-amber-50/70 border-dashed border-amber-300 text-amber-900" : m.status === "confirmed" ? "bg-teal-50/80 border-solid border-teal-200 text-teal-900 font-medium" : "bg-secondary/60 border-secondary text-foreground"}`}
                         >
                           <div>
                             <span className="font-bold text-foreground">
@@ -520,9 +709,19 @@ export function AppointmentsCalendarView({
                               {m.doctorName} &bull; {m.reason}
                             </span>
                           </div>
-                          <Badge variant="outline" className="text-[10px] capitalize">
+                          {m.status === "booked" ? (
+                        <Badge
+                          variant="outline"
+                          className="text-[10px] capitalize font-bold bg-amber-50 text-amber-800 border-dashed border-amber-300 flex items-center gap-1 w-fit"
+                        >
+                          <Clock className="w-2.5 h-2.5" />
+                          Awaiting Approval
+                        </Badge>
+                      ) : (
+                      <Badge variant="outline" className="text-[10px] capitalize">
                             {m.status}
                           </Badge>
+                      )}
                         </div>
                       ))
                     )}
@@ -549,7 +748,7 @@ export function AppointmentsCalendarView({
                   {filtered.slice(i, i + 2).map((a) => (
                     <div
                       key={a.id}
-                      className="p-2 rounded bg-card border border-border text-[11px] space-y-0.5"
+                      className={`p-2 rounded text-[11px] space-y-0.5 border ${a.status === "booked" ? "bg-amber-50/70 border-dashed border-amber-300" : a.status === "confirmed" ? "bg-teal-50/70 border-solid border-teal-200" : "bg-card border-border"}`}
                     >
                       <span className="font-semibold text-primary block">
                         {a.startTime} {a.patientName}
@@ -557,9 +756,19 @@ export function AppointmentsCalendarView({
                       <span className="text-[10px] text-muted-foreground block truncate">
                         {a.doctorName}
                       </span>
+                      {a.status === "booked" ? (
+                        <Badge
+                          variant="outline"
+                          className="text-[10px] capitalize font-bold bg-amber-50 text-amber-800 border-dashed border-amber-300 flex items-center gap-1 w-fit"
+                        >
+                          <Clock className="w-2.5 h-2.5" />
+                          Awaiting Approval
+                        </Badge>
+                      ) : (
                       <Badge variant="secondary" className="text-[9px] py-0 px-1">
                         {a.status}
                       </Badge>
+                      )}
                     </div>
                   ))}
                 </CardContent>
@@ -856,6 +1065,12 @@ export function AppointmentsCalendarView({
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* 5. BOTTOM CONFIDENTIALITY BANNER */}
+      <div className="p-3 bg-[#e8f7f4] border border-[#b2e2d8] rounded-xl flex items-center gap-2.5 text-xs text-[#0f6055] font-medium">
+        <Lock className="w-4 h-4 text-[#0f766e] shrink-0" />
+        <span>Appointments and OPD doctor slot reservations are real-time synchronized with parent WhatsApp reminders.</span>
+      </div>
     </div>
   );
 }

@@ -7,6 +7,7 @@ import {
   Users,
   ArrowRight,
   TrendingUp,
+  Lock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -14,8 +15,34 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { fetchAllCampaigns } from "@/lib/campaigns-store";
 
 export const metadata = {
-  title: "WhatsApp Campaigns | CareBridge Children's Hospital",
+  title: "WhatsApp Campaigns | MediConnect Children's Hospital",
 };
+
+function MiniSparkline({ color }: { color: string }) {
+  return (
+    <div className="h-10 w-full mt-3 -mb-1 overflow-hidden pointer-events-none">
+      <svg viewBox="0 0 100 24" className="w-full h-full" preserveAspectRatio="none">
+        <defs>
+          <linearGradient id={`grad-${color.replace("#", "")}`} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={color} stopOpacity="0.25" />
+            <stop offset="100%" stopColor={color} stopOpacity="0.0" />
+          </linearGradient>
+        </defs>
+        <path
+          d="M0,16 Q18,6 36,13 T72,11 T90,6 T100,9 L100,24 L0,24 Z"
+          fill={`url(#grad-${color.replace("#", "")})`}
+        />
+        <path
+          d="M0,16 Q18,6 36,13 T72,11 T90,6 T100,9"
+          fill="none"
+          stroke={color}
+          strokeWidth="2.2"
+          strokeLinecap="round"
+        />
+      </svg>
+    </div>
+  );
+}
 
 export default async function CampaignsPage() {
   const campaigns = await fetchAllCampaigns();
@@ -30,80 +57,139 @@ export default async function CampaignsPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">
-            WhatsApp Health Campaigns & Outreach
-          </h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
+      {/* 1. TOP WELCOME BANNER MATCHING TARGET DESIGN */}
+      <div className="relative overflow-hidden rounded-2xl border border-sky-100 bg-gradient-to-r from-[#e0f2fe]/95 via-[#e2f8f5]/85 to-[#edf9f0]/75 p-6 sm:p-7 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-6">
+        {/* Left: Heading & Subtitle */}
+        <div className="relative z-10 max-w-md">
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">
+              WhatsApp Health Campaigns
+            </h1>
+            <span className="bg-[#cbf1ea] text-[#0d6e64] text-xs font-semibold px-3 py-0.5 rounded-full whitespace-nowrap">
+              {totalCampaigns} Campaigns
+            </span>
+          </div>
+          <p className="text-xs sm:text-sm text-slate-600 font-medium mt-1.5 leading-relaxed">
             Launch targeted pediatric screening camps, immunization booster alerts, and health drives with guardian-level deduplication.
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
-          <Link href="/campaigns/new">
-            <Button className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm">
-              <Plus className="w-4 h-4" />
-              New Campaign Wizard
-            </Button>
+        {/* Center: Pediatric Mascot & Slogan */}
+        <div className="hidden lg:flex items-center gap-4 relative z-10">
+          <div className="relative h-18 w-22 shrink-0 overflow-hidden rounded-2xl bg-white/70 shadow-xs border border-white">
+            <img
+              src="/images/child-teddy-banner.jpg"
+              alt="Care Mascot with Teddy Bear"
+              className="h-full w-full object-cover object-center"
+            />
+          </div>
+          <div className="text-left select-none">
+            <span className="text-sm font-extrabold text-[#00695c] tracking-tight block leading-tight">
+              Community Outreach
+            </span>
+            <span className="text-sm font-extrabold text-[#00695c] tracking-tight flex items-center gap-1 leading-tight">
+              Health Drives <span className="text-orange-500 font-normal">📢</span>
+            </span>
+          </div>
+        </div>
+
+        {/* Right: CTA Action */}
+        <div className="relative z-10 flex items-center gap-3">
+          <Link
+            href="/campaigns/new"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#00796b] hover:bg-[#00695c] text-white font-bold text-xs shadow-md shadow-teal-800/15 transition-all hover:scale-[1.02] active:scale-[0.98]"
+          >
+            <Plus className="w-4 h-4 stroke-[2.5]" />
+            <span>New Campaign Wizard</span>
           </Link>
         </div>
       </div>
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="border-border shadow-sm">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-              Total Campaigns
-            </CardTitle>
-            <Megaphone className="w-4 h-4 text-primary" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-foreground">{totalCampaigns}</div>
-            <p className="text-xs text-muted-foreground mt-1">Health drives & seasonal camps</p>
-          </CardContent>
-        </Card>
+      {/* 2. 4 SUMMARY KPI CARDS */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        {/* Card 1: Total Campaigns */}
+        <div className="bg-white rounded-2xl p-5 border border-slate-100/90 shadow-2xs hover:shadow-xs transition-shadow flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-full bg-teal-50 flex items-center justify-center text-teal-700">
+                  <Megaphone className="w-4 h-4" />
+                </div>
+                <span className="text-xs font-bold text-slate-700">Total Drives</span>
+              </div>
+              <span className="text-[11px] font-bold text-teal-700 bg-teal-50 px-2.5 py-0.5 rounded-full">
+                Active
+              </span>
+            </div>
+            <div className="mt-3.5">
+              <span className="text-2xl lg:text-3xl font-extrabold text-slate-900">{totalCampaigns}</span>
+            </div>
+          </div>
+          <MiniSparkline color="#0d9488" />
+        </div>
 
-        <Card className="border-border shadow-sm">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-              Total Messages Sent
-            </CardTitle>
-            <Send className="w-4 h-4 text-teal-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-foreground">{totalSent}</div>
-            <p className="text-xs text-muted-foreground mt-1">Deduplicated guardian recipients</p>
-          </CardContent>
-        </Card>
+        {/* Card 2: Messages Sent */}
+        <div className="bg-white rounded-2xl p-5 border border-slate-100/90 shadow-2xs hover:shadow-xs transition-shadow flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-full bg-emerald-50 flex items-center justify-center text-[#10b981]">
+                  <Send className="w-4 h-4" />
+                </div>
+                <span className="text-xs font-bold text-slate-700">Dispatches</span>
+              </div>
+              <span className="text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2.5 py-0.5 rounded-full">
+                Deduplicated
+              </span>
+            </div>
+            <div className="mt-3.5">
+              <span className="text-2xl lg:text-3xl font-extrabold text-emerald-600">{totalSent}</span>
+            </div>
+          </div>
+          <MiniSparkline color="#10b981" />
+        </div>
 
-        <Card className="border-border shadow-sm">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-              Delivery Success
-            </CardTitle>
-            <CheckCheck className="w-4 h-4 text-teal-700" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-teal-700">{overallDeliveryRate}%</div>
-            <p className="text-xs text-muted-foreground mt-1">{totalDelivered} delivered</p>
-          </CardContent>
-        </Card>
+        {/* Card 3: Delivery Success */}
+        <div className="bg-white rounded-2xl p-5 border border-slate-100/90 shadow-2xs hover:shadow-xs transition-shadow flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-full bg-sky-50 flex items-center justify-center text-sky-600">
+                  <CheckCheck className="w-4 h-4" />
+                </div>
+                <span className="text-xs font-bold text-slate-700">Delivery Rate</span>
+              </div>
+              <span className="text-[11px] font-bold text-sky-600 bg-sky-50 px-2.5 py-0.5 rounded-full">
+                {totalDelivered} recvd
+              </span>
+            </div>
+            <div className="mt-3.5">
+              <span className="text-2xl lg:text-3xl font-extrabold text-sky-600">{overallDeliveryRate}%</span>
+            </div>
+          </div>
+          <MiniSparkline color="#0284c7" />
+        </div>
 
-        <Card className="border-border shadow-sm">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-              Guardian Engagement
-            </CardTitle>
-            <TrendingUp className="w-4 h-4 text-emerald-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-emerald-600">{overallReadRate}%</div>
-            <p className="text-xs text-muted-foreground mt-1">{totalRead} read receipts</p>
-          </CardContent>
-        </Card>
+        {/* Card 4: Guardian Engagement */}
+        <div className="bg-white rounded-2xl p-5 border border-slate-100/90 shadow-2xs hover:shadow-xs transition-shadow flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-full bg-amber-50 flex items-center justify-center text-amber-600">
+                  <TrendingUp className="w-4 h-4" />
+                </div>
+                <span className="text-xs font-bold text-slate-700">Read Receipts</span>
+              </div>
+              <span className="text-[11px] font-bold text-amber-700 bg-amber-50 px-2.5 py-0.5 rounded-full">
+                {totalRead} read
+              </span>
+            </div>
+            <div className="mt-3.5">
+              <span className="text-2xl lg:text-3xl font-extrabold text-slate-900">{overallReadRate}%</span>
+            </div>
+          </div>
+          <MiniSparkline color="#f59e0b" />
+        </div>
       </div>
 
       {/* Campaigns Grid */}
@@ -199,6 +285,12 @@ export default async function CampaignsPage() {
             </Card>
           );
         })}
+      </div>
+
+      {/* 5. BOTTOM CONFIDENTIALITY BANNER */}
+      <div className="p-3 bg-[#e8f7f4] border border-[#b2e2d8] rounded-xl flex items-center gap-2.5 text-xs text-[#0f6055] font-medium">
+        <Lock className="w-4 h-4 text-[#0f766e] shrink-0" />
+        <span>WhatsApp health campaigns adhere strictly to guardian consent preferences and DPDP privacy guidelines.</span>
       </div>
     </div>
   );

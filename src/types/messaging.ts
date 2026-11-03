@@ -36,7 +36,7 @@ export const APPROVED_TEMPLATES: MessageTemplateItem[] = [
     category: "utility",
     language: "en_US",
     status: "APPROVED",
-    headerText: "CareBridge Children's Hospital",
+    headerText: "MediConnect Children's Hospital",
     bodyText:
       "Dear {{guardian_name}}, this is a reminder that {{patient_name}} has an appointment with {{doctor_name}} tomorrow, {{date}} at {{time}}. Please arrive 10 minutes prior for vitals check.",
     footerText: "Reply 1 to Confirm, or call 1800-200-KIDS to reschedule",
@@ -51,11 +51,11 @@ export const APPROVED_TEMPLATES: MessageTemplateItem[] = [
     category: "utility",
     language: "en_US",
     status: "APPROVED",
-    headerText: "CareBridge Clinic Update",
+    headerText: "MediConnect Clinic Update",
     bodyText:
       "Hello {{guardian_name}}, {{patient_name}}'s appointment with {{doctor_name}} is in 2 hours at {{time}}. Report directly to Pediatric OPD Counter 2.",
-    footerText: "CareBridge 24x7 Pediatric Care",
-    buttons: [{ type: "URL", text: "Hospital Directions", url: "https://carebridge.in/maps" }],
+    footerText: "MediConnect 24x7 Pediatric Care",
+    buttons: [{ type: "URL", text: "Hospital Directions", url: "https://mediconnect.in/maps" }],
   },
   {
     id: "tpl-3",
@@ -66,8 +66,8 @@ export const APPROVED_TEMPLATES: MessageTemplateItem[] = [
     headerText: "Doctor Follow-up Advisory",
     bodyText:
       "Dear {{guardian_name}}, Dr. {{doctor_name}} suggested a pediatric review for {{patient_name}} around {{date}}. Timely follow-ups ensure healthy recovery.",
-    footerText: "CareBridge Children's Care",
-    buttons: [{ type: "URL", text: "Book Follow-up Slot", url: "https://carebridge.in/book" }],
+    footerText: "MediConnect Children's Care",
+    buttons: [{ type: "URL", text: "Book Follow-up Slot", url: "https://mediconnect.in/book" }],
   },
   {
     id: "tpl-4",
@@ -78,7 +78,7 @@ export const APPROVED_TEMPLATES: MessageTemplateItem[] = [
     headerText: "Prescription Care Alert",
     bodyText:
       "Friendly reminder for {{patient_name}}: Please administer prescribed doses of {{medication_name}} as directed by your pediatrician. Stay well!",
-    footerText: "CareBridge Pharmacy Desk",
+    footerText: "MediConnect Pharmacy Desk",
   },
   {
     id: "tpl-5",
@@ -100,7 +100,7 @@ export const APPROVED_TEMPLATES: MessageTemplateItem[] = [
     status: "APPROVED",
     headerText: "Free Pediatric Health Screening",
     bodyText:
-      "Join CareBridge this Saturday for our Pediatric Pulmonary & Allergy Camp. Free spirometry and senior pediatrician consultation for children aged 0-14.",
+      "Join MediConnect this Saturday for our Pediatric Pulmonary & Allergy Camp. Free spirometry and senior pediatrician consultation for children aged 0-14.",
     footerText: "Reply STOP to opt out of promotional messages",
     buttons: [{ type: "QUICK_REPLY", text: "Register Child" }],
   },

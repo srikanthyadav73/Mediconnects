@@ -104,7 +104,7 @@ function MockCheckoutSimulatorInner() {
             <HeartHandshake className="h-5 w-5 text-accent" />
           </div>
           <span className="text-xl font-bold tracking-tight text-foreground">
-            CareBridge Payments Gateway
+            MediConnect Payments Gateway
           </span>
         </div>
         <p className="text-xs text-muted-foreground font-medium">

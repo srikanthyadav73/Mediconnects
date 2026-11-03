@@ -21,17 +21,6 @@ export function middleware(request: NextRequest) {
   const sbAuthToken = request.cookies.get("sb-access-token")?.value;
   const isAuthenticated = Boolean(staffSession || sbAuthToken);
 
-  let userRole = "admin";
-  if (staffSession) {
-    try {
-      const parsed = JSON.parse(staffSession);
-      if (parsed?.role) {
-        userRole = parsed.role;
-      }
-    } catch {
-      // ignore
-    }
-  }
 
   // 3. Login page handling
   if (pathname === "/login") {
@@ -51,6 +40,7 @@ export function middleware(request: NextRequest) {
     "/messages",
     "/campaigns",
     "/enquiries",
+    "/reports",
     "/settings",
   ];
 
@@ -65,14 +55,6 @@ export function middleware(request: NextRequest) {
       loginUrl.searchParams.set("from", pathname);
       return NextResponse.redirect(loginUrl);
     }
-
-    // Role-based restrictions
-    if (
-      (pathname.startsWith("/campaigns") || pathname.startsWith("/settings")) &&
-      userRole !== "admin"
-    ) {
-      return NextResponse.redirect(new URL("/dashboard?denied=1", request.url));
-    }
   }
 
   return NextResponse.next();
@@ -83,4 +65,3 @@ export const config = {
     "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };
-

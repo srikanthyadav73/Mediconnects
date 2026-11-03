@@ -4,7 +4,7 @@ import { isRazorpayMock } from "@/lib/env";
 import { BillingClient } from "./billing-client";
 
 export const metadata = {
-  title: "Billing & Invoices | CareBridge Children's Hospital",
+  title: "Billing & Invoices | MediConnect Children's Hospital",
 };
 
 export default async function BillingPage() {

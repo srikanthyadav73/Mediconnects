@@ -3,7 +3,7 @@ import { fetchCampaignById } from "@/lib/campaigns-store";
 import { CampaignResultsClient } from "./campaign-results-client";
 
 export const metadata = {
-  title: "Campaign Results & Delivery Analytics | CareBridge Children's Hospital",
+  title: "Campaign Results & Delivery Analytics | MediConnect Children's Hospital",
 };
 
 export default async function CampaignResultsPage({

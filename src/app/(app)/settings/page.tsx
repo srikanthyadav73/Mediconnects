@@ -8,7 +8,7 @@ import {
 import { SettingsClient } from "./settings-client";
 
 export const metadata = {
-  title: "Hospital Settings & Administration | CareBridge Children's Hospital",
+  title: "Hospital Settings & Administration | MediConnect Children's Hospital",
 };
 
 export default async function SettingsPage() {

@@ -50,11 +50,11 @@ export function PrintableReceipt({ invoice, open, onOpenChange }: PrintableRecei
             <div>
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 rounded-lg bg-teal-700 text-white flex items-center justify-center font-bold text-lg">
-                  CB
+                  MC
                 </div>
                 <div>
                   <h1 className="text-2xl font-black text-teal-900 tracking-tight leading-none">
-                    CareBridge Children&apos;s Hospital
+                    MediConnect Children&apos;s Hospital
                   </h1>
                   <p className="text-xs text-zinc-500 font-medium mt-0.5">
                     Center for Advanced Pediatric Care & Child Health
@@ -218,10 +218,10 @@ export function PrintableReceipt({ invoice, open, onOpenChange }: PrintableRecei
           {/* Footer & Signature */}
           <div className="border-t border-zinc-200 pt-6 mt-8 flex justify-between items-end text-xs text-zinc-500">
             <div className="max-w-xs space-y-1">
-              <p className="font-bold text-zinc-700">CareBridge Pediatric Guarantee</p>
+              <p className="font-bold text-zinc-700">MediConnect Pediatric Guarantee</p>
               <p>
                 Computer generated medical receipt. No physical signature required. Thank you for
-                trusting CareBridge for your pediatric health needs.
+                trusting MediConnect for your pediatric health needs.
               </p>
               <div className="flex items-center gap-1.5 text-teal-800 font-medium pt-1">
                 <ShieldCheck className="w-4 h-4" /> Verified NABH Pediatric Healthcare Center
@@ -233,7 +233,7 @@ export function PrintableReceipt({ invoice, open, onOpenChange }: PrintableRecei
                 [Authorized Signatory]
               </div>
               <p className="font-semibold text-zinc-700">Accounts & Billing Officer</p>
-              <p className="text-[10px] text-zinc-400">CareBridge Children&apos;s Hospital</p>
+              <p className="text-[10px] text-zinc-400">MediConnect Children&apos;s Hospital</p>
             </div>
           </div>
         </div>

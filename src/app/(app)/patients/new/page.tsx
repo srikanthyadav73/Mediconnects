@@ -652,7 +652,7 @@ export default function NewPatientRegistrationPage() {
           )}
 
           <div className="text-xs text-muted-foreground">
-            Per CareBridge Clinical Safety rules, records are never silently merged. Choose whether to record this new visit under the existing chart or create a brand new separate profile:
+            Per MediConnect Clinical Safety rules, records are never silently merged. Choose whether to record this new visit under the existing chart or create a brand new separate profile:
           </div>
 
           <DialogFooter className="flex-col sm:flex-row gap-2 pt-2">

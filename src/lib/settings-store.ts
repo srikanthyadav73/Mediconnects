@@ -32,7 +32,7 @@ export interface AuditLogItem {
 }
 
 let inMemoryProfile: HospitalProfile = {
-  hospitalName: "CareBridge Children's Hospital",
+  hospitalName: "MediConnect Children's Hospital",
   tagline: "Center for Pediatric Excellence & Compassionate Child Care",
   registrationNumber: "ND-PED-2026-889",
   gstin: "07AAAAA0000A1Z5",
