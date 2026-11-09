@@ -34,6 +34,8 @@ BEGIN
 END;
 $$;
 
+
+-- This is for checking the working 
 -- Security Definer function to check if the current user is any hospital staff
 CREATE OR REPLACE FUNCTION public.is_staff()
 RETURNS BOOLEAN
