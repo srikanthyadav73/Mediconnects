@@ -106,6 +106,7 @@ export function AppointmentsCalendarView({
   const [statusFilter, setStatusFilter] = React.useState<string>("all");
 
   // Booking Modal
+  // for checking working
   const [bookDialogOpen, setBookDialogOpen] = React.useState(false);
   const [bookLoading, setBookLoading] = React.useState(false);
   const [bookError, setBookError] = React.useState<string | null>(null);
@@ -290,12 +291,12 @@ export function AppointmentsCalendarView({
         appointments.map((a) =>
           a.id === reschedulingApt.id
             ? {
-                ...a,
-                appointmentDate: rescheduleDate,
-                startTime: rescheduleStart,
-                endTime: rescheduleEnd,
-                status: "confirmed",
-              }
+              ...a,
+              appointmentDate: rescheduleDate,
+              startTime: rescheduleStart,
+              endTime: rescheduleEnd,
+              status: "confirmed",
+            }
             : a
         )
       );
@@ -450,36 +451,32 @@ export function AppointmentsCalendarView({
         <div className="inline-flex rounded-xl bg-slate-100 p-1 text-slate-600">
           <button
             onClick={() => setViewMode("list")}
-            className={`px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 ${
-              viewMode === "list" ? "bg-white text-teal-800 shadow-xs" : "hover:text-slate-900"
-            }`}
+            className={`px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 ${viewMode === "list" ? "bg-white text-teal-800 shadow-xs" : "hover:text-slate-900"
+              }`}
           >
             <ListFilter className="h-3.5 w-3.5" />
             List
           </button>
           <button
             onClick={() => setViewMode("day")}
-            className={`px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 ${
-              viewMode === "day" ? "bg-white text-teal-800 shadow-xs" : "hover:text-slate-900"
-            }`}
+            className={`px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 ${viewMode === "day" ? "bg-white text-teal-800 shadow-xs" : "hover:text-slate-900"
+              }`}
           >
             <Clock className="h-3.5 w-3.5" />
             Day
           </button>
           <button
             onClick={() => setViewMode("week")}
-            className={`px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 ${
-              viewMode === "week" ? "bg-white text-teal-800 shadow-xs" : "hover:text-slate-900"
-            }`}
+            className={`px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 ${viewMode === "week" ? "bg-white text-teal-800 shadow-xs" : "hover:text-slate-900"
+              }`}
           >
             <CalendarRange className="h-3.5 w-3.5" />
             Week
           </button>
           <button
             onClick={() => setViewMode("month")}
-            className={`px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 ${
-              viewMode === "month" ? "bg-white text-teal-800 shadow-xs" : "hover:text-slate-900"
-            }`}
+            className={`px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 ${viewMode === "month" ? "bg-white text-teal-800 shadow-xs" : "hover:text-slate-900"
+              }`}
           >
             <CalendarDays className="h-3.5 w-3.5" />
             Month
@@ -599,89 +596,89 @@ export function AppointmentsCalendarView({
                           Awaiting Approval
                         </Badge>
                       ) : (
-                      <div className="space-y-1">
-                        <Badge
-                          variant={
-                            apt.status === "confirmed"
-                              ? "success"
-                              : apt.status === "completed"
-                              ? "default"
-                              : apt.status === "cancelled"
-                              ? "destructive"
-                              : apt.status === "no_show"
-                              ? "warning"
-                              : "secondary"
-                          }
-                          className="text-[10px] capitalize font-medium"
-                        >
-                          {apt.status.replace("_", " ")}
-                        </Badge>
+                        <div className="space-y-1">
+                          <Badge
+                            variant={
+                              apt.status === "confirmed"
+                                ? "success"
+                                : apt.status === "completed"
+                                  ? "default"
+                                  : apt.status === "cancelled"
+                                    ? "destructive"
+                                    : apt.status === "no_show"
+                                      ? "warning"
+                                      : "secondary"
+                            }
+                            className="text-[10px] capitalize font-medium"
+                          >
+                            {apt.status.replace("_", " ")}
+                          </Badge>
 
-                        {/* WhatsApp Message Lifecycle indicator */}
-                        {apt.status === "confirmed" && (() => {
-                          const aptMsgs = messages.filter((m) => m.appointmentId === apt.id);
-                          const confMsg = aptMsgs.find((m) => m.messageType === "appointment_confirmation");
-                          const hasNoConsent = aptMsgs.some((m) => m.skipReason === "no_consent") || confMsg?.skipReason === "no_consent";
-                          const hasFailed = aptMsgs.some((m) => m.status === "failed" && m.skipReason !== "no_consent");
-                          const queuedReminders = aptMsgs.filter((m) => m.status === "queued" && m.scheduledFor);
+                          {/* WhatsApp Message Lifecycle indicator */}
+                          {apt.status === "confirmed" && (() => {
+                            const aptMsgs = messages.filter((m) => m.appointmentId === apt.id);
+                            const confMsg = aptMsgs.find((m) => m.messageType === "appointment_confirmation");
+                            const hasNoConsent = aptMsgs.some((m) => m.skipReason === "no_consent") || confMsg?.skipReason === "no_consent";
+                            const hasFailed = aptMsgs.some((m) => m.status === "failed" && m.skipReason !== "no_consent");
+                            const queuedReminders = aptMsgs.filter((m) => m.status === "queued" && m.scheduledFor);
 
-                          if (hasNoConsent) {
-                            return (
-                              <span
-                                className="inline-flex items-center gap-1 text-[10px] font-semibold text-rose-700 bg-rose-50 border border-rose-200 px-1.5 py-0.5 rounded cursor-default"
-                                title="Parent has not opted-in to WhatsApp updates. Staff may phone the parent."
-                              >
-                                <AlertCircle className="w-2.5 h-2.5 text-rose-600 shrink-0" />
-                                Not sent: no consent
-                              </span>
-                            );
-                          }
-
-                          if (hasFailed) {
-                            const failedMsg = aptMsgs.find((m) => m.status === "failed" && m.skipReason !== "no_consent");
-                            return (
-                              <div className="flex items-center gap-1">
-                                <span className="text-[10px] font-semibold text-rose-700 bg-rose-50 border border-rose-200 px-1.5 py-0.5 rounded">
-                                  Msg failed
+                            if (hasNoConsent) {
+                              return (
+                                <span
+                                  className="inline-flex items-center gap-1 text-[10px] font-semibold text-rose-700 bg-rose-50 border border-rose-200 px-1.5 py-0.5 rounded cursor-default"
+                                  title="Parent has not opted-in to WhatsApp updates. Staff may phone the parent."
+                                >
+                                  <AlertCircle className="w-2.5 h-2.5 text-rose-600 shrink-0" />
+                                  Not sent: no consent
                                 </span>
-                                {failedMsg && (
-                                  <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    disabled={retryingMessageId === failedMsg.id}
-                                    className="h-5 px-1 text-[10px] font-bold text-rose-700 hover:bg-rose-100"
-                                    onClick={() => handleRetryMessage(failedMsg.id)}
-                                  >
-                                    {retryingMessageId === failedMsg.id ? (
-                                      <Loader2 className="w-2.5 h-2.5 animate-spin" />
-                                    ) : (
-                                      "Retry"
-                                    )}
-                                  </Button>
-                                )}
-                              </div>
-                            );
-                          }
+                              );
+                            }
 
-                          return (
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setSelectedAptForMessages(apt);
-                                setLifecycleDialogOpen(true);
-                              }}
-                              className="inline-flex items-center gap-1 text-[10px] font-semibold text-teal-800 bg-teal-50 hover:bg-teal-100 border border-teal-200 px-1.5 py-0.5 rounded transition-colors"
-                              title="View WhatsApp confirmation & reminder schedule"
-                            >
-                              <CheckCheck className="w-2.5 h-2.5 text-teal-600" />
-                              WhatsApp Trail
-                              {queuedReminders.length > 0 && (
-                                <span className="text-[9px] text-teal-700 font-normal">({queuedReminders.length} rem)</span>
-                              )}
-                            </button>
-                          );
-                        })()}
-                      </div>
+                            if (hasFailed) {
+                              const failedMsg = aptMsgs.find((m) => m.status === "failed" && m.skipReason !== "no_consent");
+                              return (
+                                <div className="flex items-center gap-1">
+                                  <span className="text-[10px] font-semibold text-rose-700 bg-rose-50 border border-rose-200 px-1.5 py-0.5 rounded">
+                                    Msg failed
+                                  </span>
+                                  {failedMsg && (
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      disabled={retryingMessageId === failedMsg.id}
+                                      className="h-5 px-1 text-[10px] font-bold text-rose-700 hover:bg-rose-100"
+                                      onClick={() => handleRetryMessage(failedMsg.id)}
+                                    >
+                                      {retryingMessageId === failedMsg.id ? (
+                                        <Loader2 className="w-2.5 h-2.5 animate-spin" />
+                                      ) : (
+                                        "Retry"
+                                      )}
+                                    </Button>
+                                  )}
+                                </div>
+                              );
+                            }
+
+                            return (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setSelectedAptForMessages(apt);
+                                  setLifecycleDialogOpen(true);
+                                }}
+                                className="inline-flex items-center gap-1 text-[10px] font-semibold text-teal-800 bg-teal-50 hover:bg-teal-100 border border-teal-200 px-1.5 py-0.5 rounded transition-colors"
+                                title="View WhatsApp confirmation & reminder schedule"
+                              >
+                                <CheckCheck className="w-2.5 h-2.5 text-teal-600" />
+                                WhatsApp Trail
+                                {queuedReminders.length > 0 && (
+                                  <span className="text-[9px] text-teal-700 font-normal">({queuedReminders.length} rem)</span>
+                                )}
+                              </button>
+                            );
+                          })()}
+                        </div>
                       )}
                     </TableCell>
 
@@ -818,18 +815,18 @@ export function AppointmentsCalendarView({
                             </span>
                           </div>
                           {m.status === "booked" ? (
-                        <Badge
-                          variant="outline"
-                          className="text-[10px] capitalize font-bold bg-amber-50 text-amber-800 border-dashed border-amber-300 flex items-center gap-1 w-fit"
-                        >
-                          <Clock className="w-2.5 h-2.5" />
-                          Awaiting Approval
-                        </Badge>
-                      ) : (
-                      <Badge variant="outline" className="text-[10px] capitalize">
-                            {m.status}
-                          </Badge>
-                      )}
+                            <Badge
+                              variant="outline"
+                              className="text-[10px] capitalize font-bold bg-amber-50 text-amber-800 border-dashed border-amber-300 flex items-center gap-1 w-fit"
+                            >
+                              <Clock className="w-2.5 h-2.5" />
+                              Awaiting Approval
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline" className="text-[10px] capitalize">
+                              {m.status}
+                            </Badge>
+                          )}
                         </div>
                       ))
                     )}
@@ -873,9 +870,9 @@ export function AppointmentsCalendarView({
                           Awaiting Approval
                         </Badge>
                       ) : (
-                      <Badge variant="secondary" className="text-[9px] py-0 px-1">
-                        {a.status}
-                      </Badge>
+                        <Badge variant="secondary" className="text-[9px] py-0 px-1">
+                          {a.status}
+                        </Badge>
                       )}
                     </div>
                   ))}
@@ -905,9 +902,8 @@ export function AppointmentsCalendarView({
               return (
                 <div
                   key={dayNum}
-                  className={`p-2 rounded-lg border text-left min-h-[70px] ${
-                    hasBookings ? "bg-primary/5 border-primary/30" : "border-border/60"
-                  }`}
+                  className={`p-2 rounded-lg border text-left min-h-[70px] ${hasBookings ? "bg-primary/5 border-primary/30" : "border-border/60"
+                    }`}
                 >
                   <span className="text-xs font-bold text-foreground block">
                     {dayNum}
@@ -1214,13 +1210,12 @@ export function AppointmentsCalendarView({
                     aptMsgs.map((msg) => (
                       <div
                         key={msg.id}
-                        className={`p-3 rounded-lg border text-xs space-y-1.5 ${
-                          msg.status === "sent" || msg.status === "delivered" || msg.status === "read"
+                        className={`p-3 rounded-lg border text-xs space-y-1.5 ${msg.status === "sent" || msg.status === "delivered" || msg.status === "read"
                             ? "bg-emerald-50/50 border-emerald-200 text-emerald-950"
                             : msg.status === "failed"
-                            ? "bg-rose-50/50 border-rose-200 text-rose-950"
-                            : "bg-teal-50/30 border-teal-200 text-teal-950"
-                        }`}
+                              ? "bg-rose-50/50 border-rose-200 text-rose-950"
+                              : "bg-teal-50/30 border-teal-200 text-teal-950"
+                          }`}
                       >
                         <div className="flex items-center justify-between">
                           <span className="font-bold capitalize flex items-center gap-1.5">
@@ -1232,8 +1227,8 @@ export function AppointmentsCalendarView({
                                 msg.status === "sent" || msg.status === "delivered" || msg.status === "read"
                                   ? "default"
                                   : msg.status === "failed"
-                                  ? "destructive"
-                                  : "secondary"
+                                    ? "destructive"
+                                    : "secondary"
                               }
                               className="text-[9px] capitalize"
                             >
@@ -1264,8 +1259,8 @@ export function AppointmentsCalendarView({
                             {msg.sentAt
                               ? `Sent: ${new Date(msg.sentAt).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}`
                               : msg.scheduledFor
-                              ? `Scheduled: ${new Date(msg.scheduledFor).toLocaleDateString("en-IN", { day: "2-digit", month: "short" })} at ${new Date(msg.scheduledFor).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}`
-                              : ""}
+                                ? `Scheduled: ${new Date(msg.scheduledFor).toLocaleDateString("en-IN", { day: "2-digit", month: "short" })} at ${new Date(msg.scheduledFor).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}`
+                                : ""}
                           </span>
                           {msg.skipReason && (
                             <span className="font-semibold text-rose-600">
