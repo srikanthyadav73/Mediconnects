@@ -699,20 +699,6 @@ export type Database = {
           skip_reason?: string | null;
           attempts?: number;
           last_error?: string | null;
-          appointment_id?: string | null;
-          message_type?: MessageType | null;
-          scheduled_for?: string | null;
-          dedupe_key?: string | null;
-          skip_reason?: string | null;
-          attempts?: number;
-          last_error?: string | null;
-          appointment_id?: string | null;
-          message_type?: MessageType | null;
-          scheduled_for?: string | null;
-          dedupe_key?: string | null;
-          skip_reason?: string | null;
-          attempts?: number;
-          last_error?: string | null;
         };
         Update: {
           id?: string;
