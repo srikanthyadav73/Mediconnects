@@ -17,6 +17,7 @@ export function middleware(request: NextRequest) {
   }
 
   // 2. Read staff session cookie or Supabase auth token
+  // to check the working 
   const staffSession = request.cookies.get("carebridge_staff_session")?.value;
   const sbAuthToken = request.cookies.get("sb-access-token")?.value;
   const isAuthenticated = Boolean(staffSession || sbAuthToken);
